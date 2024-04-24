@@ -1,8 +1,8 @@
 ﻿using CommunicationsApp.Application.Common;
-using CommunicationsApp.Infrastructure;
+using CommunicationsApp.Domain.Abstractions;
 using MediatR;
 
-namespace CommunicationsApp.Application.Users.Queries;
+namespace CommunicationsApp.Application.Users.Queries.QueryByEmail;
 
 public record QueryByEmailCommand : IRequest<IList<UserDTO>>
 {

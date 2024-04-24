@@ -1,6 +1,7 @@
-﻿using CommunicationsApp.Domain.Entities;
+﻿using CommunicationsApp.Application;
+using CommunicationsApp.Domain.Abstractions;
+using CommunicationsApp.Domain.Entities;
 using CommunicationsApp.Infrastructure.Email;
-using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,6 +12,9 @@ public static class Startup
 {
     public static void RegisterInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
     {
+        // Application
+        services.RegisterApplicationServices();
+
         // Database
         services.AddDbContext<AppDbContext>(options => options.UseSqlServer(
             configuration.GetConnectionString("DbConnectionString")));
@@ -30,8 +34,10 @@ public static class Startup
                 .AddRoles<Role>()
                 .AddEntityFrameworkStores<AppDbContext>();
 
+        services.AddScoped<IWorkUnit, WorkUnit>();
+
         // Email
-        services.Configure<EmailOptions>(configuration.GetSection("EmailOptions"));
-        services.AddTransient<IEmailSender, EmailSender>();
+        services.Configure<EmailOptions>(configuration.GetSection(EmailOptions.ConfigurationName));
+        services.AddTransient<IEmailService, EmailService>();
     }
 }

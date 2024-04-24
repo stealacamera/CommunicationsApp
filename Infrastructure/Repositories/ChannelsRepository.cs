@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CommunicationsApp.Infrastructure.Repositories;
 
-public class ChannelsRepository
+internal class ChannelsRepository
     : BaseSoftDeleteRepository<Channel, int>, IChannelsRepository
 {
     public ChannelsRepository(AppDbContext appDbContext) : base(appDbContext)

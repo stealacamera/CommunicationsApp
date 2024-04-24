@@ -22,11 +22,13 @@ internal class UsersRepository : IUsersRepository
     public async Task<bool> DoesUserExistAsync(int id, bool excludeDeleted = true)
         => await GetByIdAsync(id, excludeDeleted) != null;
 
-    public async Task<User?> GetByIdAsync(int id, bool excludeDeleted = true)
+    public async Task<User?> GetByIdAsync(int id, bool excludeDeleted = true, bool excludeNonConfirmedEmail = true)
     {
         var user = await _userManager.FindByIdAsync(id.ToString());
 
-        if (excludeDeleted && (user.DeletedAt != null || user.EmailConfirmed == false))
+        if (excludeDeleted && user.DeletedAt != null)
+            return null;
+        else if (excludeNonConfirmedEmail && user.EmailConfirmed == false)
             return null;
 
         return user;

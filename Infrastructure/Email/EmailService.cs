@@ -1,33 +1,25 @@
 ﻿using CommunicationsApp.Domain.Abstractions;
 using MailKit.Net.Smtp;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity.UI.Services;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.Extensions.Options;
 using MimeKit;
 
 namespace CommunicationsApp.Infrastructure.Email;
 
-public class EmailSender : IEmailService, IEmailSender
+public class EmailService : IEmailService, IEmailSender
 {
     private readonly EmailOptions _emailOptions;
 
-    public EmailSender(IOptions<EmailOptions> emailOptions) 
+    public EmailService(IOptions<EmailOptions> emailOptions) 
         => _emailOptions = emailOptions.Value;
 
     public async Task SendEmailConfirmationEmailAsync(
-        UrlHelper urlHelper, 
-        HttpRequest request, 
-        string emailConfirmationToken, 
-        string userId, 
-        string userEmail)
+        string baseUrl,
+        int userId,
+        string userEmail, 
+        string emailConfirmationToken)
     {
-        var confirmationLink = urlHelper.Action(
-            "ConfirmEmail", 
-            "Identity", 
-            new { userId, emailConfirmationToken }, 
-            request.Scheme);
+        var confirmationLink = baseUrl + $"?userId={userId}&token={emailConfirmationToken}";
 
         await SendEmailAsync(
             userEmail,
@@ -39,7 +31,7 @@ public class EmailSender : IEmailService, IEmailSender
     {
         var emailMessage = new MimeMessage();
 
-        emailMessage.From.Add(MailboxAddress.Parse("info@artcommissions.com"));
+        emailMessage.From.Add(MailboxAddress.Parse(_emailOptions.InfoDeskEmail));
         emailMessage.To.Add(MailboxAddress.Parse(email));
 
         emailMessage.Subject = subject;
@@ -53,7 +45,7 @@ public class EmailSender : IEmailService, IEmailSender
             emailClient.Disconnect(true);
         }
 
-        // TODO what to do if it doesnt send?
+        // TODO outbox pattern for emails that dont send
 
         return Task.CompletedTask;
     }

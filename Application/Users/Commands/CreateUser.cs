@@ -1,26 +1,18 @@
 ﻿using CommunicationsApp.Application.Common.Exceptions;
+using CommunicationsApp.Domain.Abstractions;
 using CommunicationsApp.Domain.Entities;
-using CommunicationsApp.Infrastructure;
+using CommunicationsApp.Domain.Events;
 using FluentValidation;
 using MediatR;
-using Microsoft.AspNetCore.Identity.UI.Services;
-using System.ComponentModel.DataAnnotations;
 
 namespace CommunicationsApp.Application.Users.Commands;
 
-public record CreateUserCommand : IRequest<User>
-{
-    [Required]
-    [StringLength(45)]
-    public string Username { get; set; }
-
-    [Required]
-    public string Password { get; set; }
-
-    [Required]
-    [EmailAddress]
-    public string Email { get; set; }
-}
+public record CreateUserCommand(
+    string Username, 
+    string Password, 
+    string Email, 
+    string EmailConfirmationBaseUrl) 
+    : IRequest<User>;
 
 public sealed class CreateUserCommandValidator : AbstractValidator<CreateUserCommand>
 {
@@ -37,18 +29,21 @@ public sealed class CreateUserCommandValidator : AbstractValidator<CreateUserCom
         RuleFor(e => e.Email)
             .NotEmpty()
             .EmailAddress();
+
+        RuleFor(e => e.EmailConfirmationBaseUrl)
+            .NotEmpty();
     }
 }
 
 public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, User>
 {
     private readonly IWorkUnit _workUnit;
-    private readonly IEmailSender _emailSender;
+    private readonly IPublisher _publisher;
 
-    public CreateUserCommandHandler(IWorkUnit workUnit, IEmailSender emailSender)
+    public CreateUserCommandHandler(IWorkUnit workUnit, IPublisher publisher)
     {
         _workUnit = workUnit;
-        _emailSender = emailSender;
+        _publisher = publisher;
     }
 
     public async Task<User> Handle(CreateUserCommand request, CancellationToken cancellationToken)
@@ -64,6 +59,8 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, User>
         if (createUserResult.Succeeded)
         {
             await _workUnit.SaveChangesAsync();
+            await _publisher.Publish(new UserAdded(user.Id, user.Email, request.EmailConfirmationBaseUrl, DateTime.Now));
+
             return user;
         }
         else

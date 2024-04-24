@@ -3,9 +3,8 @@
 public interface IEmailService
 {
     Task SendEmailConfirmationEmailAsync(
-        UrlHelper urlHelper,
-        HttpRequest request,
-        string emailConfirmationToken,
-        string userId,
-        string userEmail);
+        string baseUrl,
+        int userId,
+        string userEmail,
+        string emailConfirmationToken);
 }

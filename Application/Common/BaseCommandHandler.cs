@@ -1,4 +1,4 @@
-﻿using CommunicationsApp.Infrastructure;
+﻿using CommunicationsApp.Domain.Abstractions;
 
 namespace CommunicationsApp.Application.Common;
 

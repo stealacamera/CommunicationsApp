@@ -2,8 +2,9 @@
 
 namespace CommunicationsApp.Domain.Events;
 
-public record UserAdded : BaseEvent
-{
-    public int Id { get; set; }
-    public string Email { get; set; } = null!;
-}
+public record UserAdded(
+    int Id, 
+    string Email, 
+    string EmailConfirmationBaseUrl, 
+    DateTime OccurredAt) 
+    : BaseEvent(OccurredAt);

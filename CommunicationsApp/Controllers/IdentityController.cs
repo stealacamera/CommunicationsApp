@@ -1,10 +1,10 @@
 ﻿using CommunicationsApp.Application.Identity.Commands;
 using CommunicationsApp.Application.Users.Commands;
 using CommunicationsApp.Web.Models;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Org.BouncyCastle.Bcpg;
+using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace CommunicationsApp.Web.Controllers;
 
@@ -23,21 +23,23 @@ public class IdentityController : BaseController
     public async Task<IActionResult> SignUp(SignUpDTO model)
     {
         if (!ModelState.IsValid)
-            return RedirectToAction(nameof(SignUp));
+            return View(model);
+        
+        string baseUrl = Url.Action(nameof(ConfirmEmail));
 
-        CreateUserCommand command = new()
-        {
-            Email = model.Email,
-            Password = model.Password,
-            Username = model.Username
-        };
-
-        var user = await Sender.Send(command);
-
-        return View();
+        CreateUserCommand command = new(model.Username, model.Password, model.Email, baseUrl);
+        await Sender.Send(command);
+        
+        return RedirectToAction(nameof(EmailConfirmation));
     }
 
     [HttpGet]
+    public IActionResult EmailConfirmation(bool? isEmailConfirmed = null)
+    {
+        return View(isEmailConfirmed);
+    }
+
+    [HttpPost]
     public async Task<IActionResult> ConfirmEmail(
         [FromQuery(Name = "userId")] int userId, 
         [FromQuery(Name = "token")] string token)
@@ -49,17 +51,20 @@ public class IdentityController : BaseController
         };
 
         bool isEmailConfirmed = await Sender.Send(confirmationCommand);
-        return View(isEmailConfirmed);
+        return RedirectToAction(nameof(EmailConfirmation), isEmailConfirmed);
     }
 
     #region API
     [HttpPost]
     public async Task<IActionResult> ResendEmailConfirmation([FromBody, EmailAddress] string email)
     {
+        if (!ModelState.IsValid)
+            return BadRequest();
+
         ResendEmailConfirmationCommand command = new() { Email = email };
         var hasEmailBeenSent = await Sender.Send(command);
 
-        return hasEmailBeenSent ? Ok() : BadRequest(/*"Something went wrong with your request. Please make sure that the email you inputted was the one you signed up with"*/);
+        return hasEmailBeenSent ? Ok() : BadRequest();
     }
     #endregion
 }

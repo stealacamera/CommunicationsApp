@@ -1,4 +1,5 @@
-﻿using CommunicationsApp.Domain.Abstractions.Repositories;
+﻿using CommunicationsApp.Domain.Abstractions;
+using CommunicationsApp.Domain.Abstractions.Repositories;
 using CommunicationsApp.Domain.Entities;
 using CommunicationsApp.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Identity;
@@ -6,19 +7,6 @@ using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace CommunicationsApp.Infrastructure;
-
-public interface IWorkUnit
-{
-    Task<IDbContextTransaction> BeginTransactionAsync();
-    Task SaveChangesAsync();
-
-    #region Repositories
-    IUsersRepository UsersRepository { get; }
-    IMessagesRepository MessagesRepository { get; }
-    IChannelsRepository ChannelsRepository { get; }
-    IChannelMembersRepository ChannelMembersRepository { get; }
-    #endregion
-}
 
 public class WorkUnit : IWorkUnit
 {

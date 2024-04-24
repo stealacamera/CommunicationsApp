@@ -2,6 +2,8 @@
 
 public sealed record EmailOptions
 {
+    public static string ConfigurationName = "EmailSettings";
+
     public string Host { get; set; } = null!;
     public int Port { get; set; }
 

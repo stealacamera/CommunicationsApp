@@ -3,7 +3,7 @@ using CommunicationsApp.Domain.Entities;
 
 namespace CommunicationsApp.Infrastructure.Repositories;
 
-public sealed class ChannelMembersRepository : BaseRepository<ChannelMember>, IChannelMembersRepository
+internal sealed class ChannelMembersRepository : BaseRepository<ChannelMember>, IChannelMembersRepository
 {
     public ChannelMembersRepository(AppDbContext appDbContext) : base(appDbContext)
     {

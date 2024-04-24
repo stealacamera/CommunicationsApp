@@ -1,7 +1,7 @@
 ﻿using CommunicationsApp.Application.Common;
 using CommunicationsApp.Application.Common.Exceptions;
+using CommunicationsApp.Domain.Abstractions;
 using CommunicationsApp.Domain.Entities;
-using CommunicationsApp.Infrastructure;
 using FluentValidation;
 using MediatR;
 

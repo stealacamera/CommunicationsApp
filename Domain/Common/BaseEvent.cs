@@ -2,7 +2,4 @@
 
 namespace CommunicationsApp.Domain.Common;
 
-public abstract record BaseEvent : INotification
-{
-    public DateTime OccurredAt { get; set; }
-}
+public abstract record BaseEvent(DateTime OccurredAt) : INotification;

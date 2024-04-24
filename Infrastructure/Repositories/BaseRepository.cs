@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CommunicationsApp.Infrastructure.Repositories;
 
-public abstract class BaseRepository<TEntity>
+internal abstract class BaseRepository<TEntity>
     : IBaseRepository<TEntity>
     where TEntity : class
 {
@@ -24,7 +24,7 @@ public abstract class BaseRepository<TEntity>
     }
 }
 
-public abstract class BaseStrongEntityRepository<TEntity, TKey>
+internal abstract class BaseStrongEntityRepository<TEntity, TKey>
     : BaseRepository<TEntity>, IBaseStrongEntityRepository<TEntity, TKey>
     where TEntity : BaseStrongEntity<TKey>
 {
@@ -41,7 +41,7 @@ public abstract class BaseStrongEntityRepository<TEntity, TKey>
     }
 }
 
-public class BaseSoftDeleteRepository<TEntity, TKey>
+internal class BaseSoftDeleteRepository<TEntity, TKey>
     : BaseStrongEntityRepository<TEntity, TKey>
     where TEntity : BaseSoftDeleteEntity<TKey>
 {

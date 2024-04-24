@@ -1,5 +1,5 @@
 ﻿using CommunicationsApp.Application.Common;
-using CommunicationsApp.Infrastructure;
+using CommunicationsApp.Domain.Abstractions;
 using FluentValidation;
 using MediatR;
 
