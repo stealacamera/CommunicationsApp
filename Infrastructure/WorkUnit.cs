@@ -12,11 +12,13 @@ public class WorkUnit : IWorkUnit
 {
     private readonly AppDbContext _dbContext;
     private readonly UserManager<User> _userManager;
+    private readonly SignInManager<User> _signInManager;
 
     public WorkUnit(IServiceProvider serviceProvider)
     {
         _dbContext = serviceProvider.GetRequiredService<AppDbContext>();
         _userManager = serviceProvider.GetRequiredService<UserManager<User>>();
+        _signInManager = serviceProvider.GetRequiredService<SignInManager<User>>();
     }
 
     public async Task<IDbContextTransaction> BeginTransactionAsync()
@@ -34,7 +36,7 @@ public class WorkUnit : IWorkUnit
     {
         get
         {
-            _usersRepository ??= new UsersRepository(_userManager);
+            _usersRepository ??= new UsersRepository(_userManager, _signInManager);
             return _usersRepository;
         }
     }

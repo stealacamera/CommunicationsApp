@@ -1,13 +1,10 @@
-﻿using System.ComponentModel;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel;
 
 namespace CommunicationsApp.Web.Models;
 
-public record SignUpDTO
+public record LoginDTO
 {
-    [Required]
-    public string Username { get; set; } = null!;
-
     [Required]
     [EmailAddress]
     public string Email { get; set; } = null!;
@@ -15,4 +12,7 @@ public record SignUpDTO
     [Required]
     [PasswordPropertyText]
     public string Password { get; set; } = null!;
+
+    [Required]
+    public bool RememberMe { get; set; } = true;
 }

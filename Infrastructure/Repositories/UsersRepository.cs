@@ -8,12 +8,15 @@ namespace CommunicationsApp.Infrastructure.Repositories;
 internal class UsersRepository : IUsersRepository
 {
     private readonly UserManager<User> _userManager;
+    private readonly SignInManager<User> _signInManager;
     private readonly IQueryable<User> _untrackedSet;
 
-    public UsersRepository(UserManager<User> userManager)
+    public UsersRepository(UserManager<User> userManager, SignInManager<User> signInManager)
     {
         _userManager = userManager;
         _untrackedSet = _userManager.Users.AsNoTracking();
+
+        _signInManager = signInManager;
     }
 
     public async Task<IdentityResult> AddAsync(User user, string password)
@@ -55,13 +58,18 @@ internal class UsersRepository : IUsersRepository
         return await query.ToListAsync();
     }
 
-    public async Task<User?> GetByEmailAsync(string email, bool excludeDeleted = true)
+    public async Task<User?> GetByEmailAsync(string email, bool excludeDeleted = true, bool excludeNonConfirmedEmail = true)
     {
         var user = await _userManager.FindByEmailAsync(email);
 
-        if (user == null || (excludeDeleted && user.DeletedAt != null))
+        if (excludeDeleted && user.DeletedAt != null)
+            return null;
+        else if (excludeNonConfirmedEmail && user.EmailConfirmed == false)
             return null;
 
         return user;
     }
+
+    public async Task<SignInResult> SignInUserAsync(User user, string password, bool isPersistent = true)
+        => await _signInManager.PasswordSignInAsync(user, password, isPersistent, false);
 }

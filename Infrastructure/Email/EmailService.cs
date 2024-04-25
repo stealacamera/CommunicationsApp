@@ -45,6 +45,7 @@ public class EmailService : IEmailService, IEmailSender
             emailClient.Disconnect(true);
         }
 
+        // TODO fix why email is not received
         // TODO outbox pattern for emails that dont send
 
         return Task.CompletedTask;
