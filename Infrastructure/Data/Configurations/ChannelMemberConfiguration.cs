@@ -13,14 +13,14 @@ internal class ChannelMemberConfiguration : IEntityTypeConfiguration<ChannelMemb
         builder.HasKey(e => new { e.MemberId, e.ChannelId });
 
         builder.HasOne<User>()
-               .WithOne()
-               .HasForeignKey<ChannelMember>(e => e.MemberId)
+               .WithMany()
+               .HasForeignKey(e => e.MemberId)
                .OnDelete(DeleteBehavior.Restrict)
                .IsRequired();
 
         builder.HasOne<Channel>()
-               .WithOne()
-               .HasForeignKey<ChannelMember>(e => e.ChannelId)
+               .WithMany()
+               .HasForeignKey(e => e.ChannelId)
                .OnDelete(DeleteBehavior.Restrict)
                .IsRequired();
     }

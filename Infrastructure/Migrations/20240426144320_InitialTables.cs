@@ -100,8 +100,8 @@ namespace CommunicationsApp.Infrastructure.Migrations
                 name: "AspNetUserLogins",
                 columns: table => new
                 {
-                    LoginProvider = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    ProviderKey = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    LoginProvider = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
+                    ProviderKey = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
                     ProviderDisplayName = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     UserId = table.Column<int>(type: "int", nullable: false)
                 },
@@ -145,8 +145,8 @@ namespace CommunicationsApp.Infrastructure.Migrations
                 columns: table => new
                 {
                     UserId = table.Column<int>(type: "int", nullable: false),
-                    LoginProvider = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    LoginProvider = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
                     Value = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
@@ -168,7 +168,7 @@ namespace CommunicationsApp.Infrastructure.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     OwnerId = table.Column<int>(type: "int", nullable: false),
                     Name = table.Column<string>(type: "nvarchar(55)", maxLength: 55, nullable: false),
-                    Code = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
+                    Code = table.Column<string>(type: "nvarchar(22)", maxLength: 22, nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
@@ -188,7 +188,8 @@ namespace CommunicationsApp.Infrastructure.Migrations
                 columns: table => new
                 {
                     MemberId = table.Column<int>(type: "int", nullable: false),
-                    ChannelId = table.Column<int>(type: "int", nullable: false)
+                    ChannelId = table.Column<int>(type: "int", nullable: false),
+                    MembersId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -205,26 +206,8 @@ namespace CommunicationsApp.Infrastructure.Migrations
                         principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ChannelUser",
-                columns: table => new
-                {
-                    ChannelId = table.Column<int>(type: "int", nullable: false),
-                    MembersId = table.Column<int>(type: "int", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ChannelUser", x => new { x.ChannelId, x.MembersId });
                     table.ForeignKey(
-                        name: "FK_ChannelUser_Channels_ChannelId",
-                        column: x => x.ChannelId,
-                        principalTable: "Channels",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_ChannelUser_Users_MembersId",
+                        name: "FK_ChannelMembers_Users_MembersId",
                         column: x => x.MembersId,
                         principalTable: "Users",
                         principalColumn: "Id",
@@ -290,14 +273,12 @@ namespace CommunicationsApp.Infrastructure.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_ChannelMembers_ChannelId",
                 table: "ChannelMembers",
-                column: "ChannelId",
-                unique: true);
+                column: "ChannelId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ChannelMembers_MemberId",
+                name: "IX_ChannelMembers_MembersId",
                 table: "ChannelMembers",
-                column: "MemberId",
-                unique: true);
+                column: "MembersId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Channels_Code",
@@ -309,11 +290,6 @@ namespace CommunicationsApp.Infrastructure.Migrations
                 name: "IX_Channels_OwnerId",
                 table: "Channels",
                 column: "OwnerId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ChannelUser_MembersId",
-                table: "ChannelUser",
-                column: "MembersId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Messages_ChannelId",
@@ -358,9 +334,6 @@ namespace CommunicationsApp.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "ChannelMembers");
-
-            migrationBuilder.DropTable(
-                name: "ChannelUser");
 
             migrationBuilder.DropTable(
                 name: "Messages");

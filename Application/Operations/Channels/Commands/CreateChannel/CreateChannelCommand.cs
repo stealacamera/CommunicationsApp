@@ -1,5 +1,5 @@
-﻿using CommunicationsApp.Domain.Common;
-using CommunicationsApp.Domain.Entities;
+﻿using CommunicationsApp.Application.DTOs;
+using CommunicationsApp.Domain.Common;
 using FluentValidation;
 using MediatR;
 

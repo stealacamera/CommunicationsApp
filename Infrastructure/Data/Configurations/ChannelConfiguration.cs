@@ -18,7 +18,7 @@ internal class ChannelConfiguration : IEntityTypeConfiguration<Channel>
 
         builder.Property(e => e.Code)
                .IsRequired()
-               .HasMaxLength(10);
+               .HasMaxLength(22);
 
         builder.HasIndex(e => e.Code)
                .IsUnique();
@@ -33,6 +33,7 @@ internal class ChannelConfiguration : IEntityTypeConfiguration<Channel>
                .IsRequired();
 
         builder.HasMany(e => e.Members)
-               .WithMany();
+               .WithMany()
+               .UsingEntity<ChannelMember>();
     }
 }

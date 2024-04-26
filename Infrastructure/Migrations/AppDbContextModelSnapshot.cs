@@ -22,21 +22,6 @@ namespace CommunicationsApp.Infrastructure.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("ChannelUser", b =>
-                {
-                    b.Property<int>("ChannelId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("MembersId")
-                        .HasColumnType("int");
-
-                    b.HasKey("ChannelId", "MembersId");
-
-                    b.HasIndex("MembersId");
-
-                    b.ToTable("ChannelUser");
-                });
-
             modelBuilder.Entity("CommunicationsApp.Domain.Entities.Channel", b =>
                 {
                     b.Property<int>("Id")
@@ -47,8 +32,8 @@ namespace CommunicationsApp.Infrastructure.Migrations
 
                     b.Property<string>("Code")
                         .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)");
+                        .HasMaxLength(22)
+                        .HasColumnType("nvarchar(22)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -82,13 +67,14 @@ namespace CommunicationsApp.Infrastructure.Migrations
                     b.Property<int>("ChannelId")
                         .HasColumnType("int");
 
+                    b.Property<int>("MembersId")
+                        .HasColumnType("int");
+
                     b.HasKey("MemberId", "ChannelId");
 
-                    b.HasIndex("ChannelId")
-                        .IsUnique();
+                    b.HasIndex("ChannelId");
 
-                    b.HasIndex("MemberId")
-                        .IsUnique();
+                    b.HasIndex("MembersId");
 
                     b.ToTable("ChannelMembers", (string)null);
                 });
@@ -283,10 +269,12 @@ namespace CommunicationsApp.Infrastructure.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<int>", b =>
                 {
                     b.Property<string>("LoginProvider")
-                        .HasColumnType("nvarchar(450)");
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
 
                     b.Property<string>("ProviderKey")
-                        .HasColumnType("nvarchar(450)");
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
 
                     b.Property<string>("ProviderDisplayName")
                         .HasColumnType("nvarchar(max)");
@@ -322,10 +310,12 @@ namespace CommunicationsApp.Infrastructure.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("LoginProvider")
-                        .HasColumnType("nvarchar(450)");
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
 
                     b.Property<string>("Name")
-                        .HasColumnType("nvarchar(450)");
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
 
                     b.Property<string>("Value")
                         .HasColumnType("nvarchar(max)");
@@ -333,21 +323,6 @@ namespace CommunicationsApp.Infrastructure.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
-                });
-
-            modelBuilder.Entity("ChannelUser", b =>
-                {
-                    b.HasOne("CommunicationsApp.Domain.Entities.Channel", null)
-                        .WithMany()
-                        .HasForeignKey("ChannelId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("CommunicationsApp.Domain.Entities.User", null)
-                        .WithMany()
-                        .HasForeignKey("MembersId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("CommunicationsApp.Domain.Entities.Channel", b =>
@@ -362,15 +337,21 @@ namespace CommunicationsApp.Infrastructure.Migrations
             modelBuilder.Entity("CommunicationsApp.Domain.Entities.ChannelMember", b =>
                 {
                     b.HasOne("CommunicationsApp.Domain.Entities.Channel", null)
-                        .WithOne()
-                        .HasForeignKey("CommunicationsApp.Domain.Entities.ChannelMember", "ChannelId")
+                        .WithMany()
+                        .HasForeignKey("ChannelId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("CommunicationsApp.Domain.Entities.User", null)
-                        .WithOne()
-                        .HasForeignKey("CommunicationsApp.Domain.Entities.ChannelMember", "MemberId")
+                        .WithMany()
+                        .HasForeignKey("MemberId")
                         .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CommunicationsApp.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("MembersId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 

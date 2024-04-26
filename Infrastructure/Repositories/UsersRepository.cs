@@ -2,6 +2,7 @@
 using CommunicationsApp.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 namespace CommunicationsApp.Infrastructure.Repositories;
 
@@ -46,18 +47,6 @@ internal class UsersRepository : IUsersRepository
     public async Task<string> GetEmailConfirmationTokenAsync(User user)
         => await _userManager.GenerateEmailConfirmationTokenAsync(user);
 
-    public async Task<IEnumerable<User>> QueryByEmail(string queryString)
-    {
-        if(string.IsNullOrEmpty(queryString) || string.IsNullOrWhiteSpace(queryString))
-            return new List<User>();
-
-        IQueryable<User> query = _untrackedSet.Where(
-            e => e.EmailConfirmed == true 
-            && e.Email.Contains(queryString));
-
-        return await query.ToListAsync();
-    }
-
     public async Task<User?> GetByEmailAsync(string email, bool excludeDeleted = true, bool excludeNonConfirmedEmail = true)
     {
         var user = await _userManager.FindByEmailAsync(email);
@@ -70,6 +59,22 @@ internal class UsersRepository : IUsersRepository
         return user;
     }
 
+    public async Task<IEnumerable<User>> QueryByEmailAndUsernameAsync(string queryString)
+    {
+        if(queryString.IsNullOrEmpty())
+            return new List<User>();
+
+        IQueryable<User> query = _untrackedSet.Where(
+            e => e.Email.Contains(queryString) 
+            || e.UserName.Contains(queryString));
+
+        return await query.ToListAsync();
+    }
+
     public async Task<SignInResult> SignInUserAsync(User user, string password, bool isPersistent = true)
         => await _signInManager.PasswordSignInAsync(user, password, isPersistent, false);
+
+    public async Task LogOutUserAsync()
+        => await _signInManager.SignOutAsync();
+
 }

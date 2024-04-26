@@ -1,4 +1,4 @@
-﻿namespace CommunicationsApp.Application.Operations.Users.Queries;
+﻿namespace CommunicationsApp.Application.DTOs;
 
 public class UserDTO
 {

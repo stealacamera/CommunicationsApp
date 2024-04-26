@@ -8,6 +8,7 @@ public interface IUsersRepository
     Task<IdentityResult> AddAsync(User user, string password);
 
     Task<SignInResult> SignInUserAsync(User user, string password, bool isPersistent = true);
+    Task LogOutUserAsync();
 
     Task<string> GetEmailConfirmationTokenAsync(User user);
     Task<bool> IsEmailConfirmationTokenValidAsync(User user, string token);
@@ -16,5 +17,5 @@ public interface IUsersRepository
     Task<User?> GetByEmailAsync(string email, bool excludeDeleted = true, bool excludeNonConfirmedEmail = true);
     Task<bool> DoesUserExistAsync(int id, bool excludeDeleted = true);
 
-    Task<IEnumerable<User>> QueryByEmail(string query);
+    Task<IEnumerable<User>> QueryByEmailAndUsernameAsync(string query);
 }

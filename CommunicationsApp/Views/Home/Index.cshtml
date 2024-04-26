@@ -1,8 +1,67 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model List<CommunicationsApp.Application.DTOs.Channel>
+
+@section Styles {
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createChannelModal">Create a new channel</button>
+
+<div class="modal fade" id="createChannelModal" tabindex="-1" aria-labelledby="createChannelModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="exampleModalLabel">Create new channel</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createChannelForm" asp-controller="Channels" asp-action="Create">
+                    <div class="form-group">
+                        <input required name="name" type="text" class="form-control" placeholder="Enter channel name">
+                    </div>
+                    <div class="form-group">
+                        <label for="members">Select members</label>
+
+                        <input required id="memberSearchInput" name="memberSearch" type="text" class="form-control" placeholder="Type in a username or email">
+                        <div id="membersSearchResult">
+                        </div>
+                    </div>
+
+                    <input type="submit" class="btn btn-primary" value="Create" />
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
+
+
+<div class="d-flex flex-column align-items-stretch flex-shrink-0 bg-white" style="width: 380px;">
+    <p class="d-flex align-items-center flex-shrink-0 p-3 link-dark text-decoration-none border-bottom">
+        <svg class="bi me-2" width="30" height="24"><use xlink:href="#bootstrap"></use></svg>
+        <span class="fs-5 fw-semibold">Your channels</span>
+    </p>
+
+    <div class="list-group list-group-flush border-bottom scrollarea">
+        @if (!Model.Any())
+        {
+            <p>No channels as of now</p>
+        }
+        else
+        {
+            foreach (var channel in Model)
+            {
+                <a href="#" class="list-group-item list-group-item-action active py-3 lh-tight" aria-current="true">
+                    <div class="d-flex w-100 align-items-center justify-content-between">
+                        <strong class="mb-1">@channel.Name</strong>
+                    </div>
+                    <div class="col-10 mb-1 small">Latest message here...</div>
+                </a>
+            }
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script src="/js/createChannelAjax.js"></script>
+    <script src="/js/memberSearchAjax.js"></script>
+}

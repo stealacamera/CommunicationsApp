@@ -22,18 +22,17 @@ internal class ChannelsRepository
 
     public override Task<Channel> AddAsync(Channel entity)
     {
-        entity.Code = CreateUniqueCode(entity);
+        entity.Code = CreateUniqueCode();
         return base.AddAsync(entity);
     }
 
-    private string CreateUniqueCode(Channel entity)
+    private string CreateUniqueCode()
     {
-        long ticks = entity.CreatedAt.Ticks;
-        byte[] bytes = BitConverter.GetBytes(ticks);
-        return Convert.ToBase64String(bytes)
-                      .Replace('+', '_')
-                      .Replace('/', '-')
-                      .TrimEnd('=');
+        Guid code = Guid.NewGuid();
+        string shortenedCode = Convert.ToBase64String(code.ToByteArray());
+
+        // Removes '==' that are always at the end
+        return shortenedCode.Remove(shortenedCode.Length - 2); 
     }
 
     public async Task<bool> DoesUserBelongToChannel(int userId, int channelId)

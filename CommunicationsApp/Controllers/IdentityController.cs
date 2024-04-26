@@ -4,6 +4,8 @@ using CommunicationsApp.Application.Operations.Identity.Commands.LoginUser;
 using CommunicationsApp.Application.Operations.Identity.Commands.ResendEmailConfirmation;
 using CommunicationsApp.Application.Operations.Users.Commands.CreateUser;
 using CommunicationsApp.Web.Models;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 
@@ -79,6 +81,20 @@ public class IdentityController : BaseController
                 return View(model);
             }
         }
+    }
+
+    //  TODO only for users
+    [Authorize]
+    [HttpPost]
+    public async Task LogOut()
+    {
+        var authProperties = new AuthenticationProperties
+        {
+            RedirectUri = Url.Action(nameof(SignUp))
+        };
+
+        // TODO fix; wrong redirect
+        await HttpContext.SignOutAsync(authProperties);
     }
 
     [HttpGet]

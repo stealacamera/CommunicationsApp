@@ -1,21 +1,31 @@
-﻿using CommunicationsApp.Models;
+﻿using CommunicationsApp.Application.Operations.Channels.Queries.GetAllChannelsForUser;
+using CommunicationsApp.Models;
+using CommunicationsApp.Web.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 
 namespace CommunicationsApp.Controllers
 {
-    public class HomeController : Controller
+    public class HomeController : BaseController
     {
-        private readonly ILogger<HomeController> _logger;
-
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController()
         {
-            _logger = logger;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            return View();
+            int userId = GetCurrentUserId();
+
+            if (userId == 0)
+                return View("Welcome");
+
+            GetAllChannelsForUserCommad command = new(userId);
+            var userChannelsResult = await Sender.Send(command);
+
+            if (userChannelsResult.Failed)
+                throw new UnauthorizedAccessException();
+
+            return View(userChannelsResult.Value);
         }
 
         public IActionResult Privacy()
