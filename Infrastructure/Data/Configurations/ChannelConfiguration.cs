@@ -34,6 +34,8 @@ internal class ChannelConfiguration : IEntityTypeConfiguration<Channel>
 
         builder.HasMany(e => e.Members)
                .WithMany()
-               .UsingEntity<ChannelMember>();
+               .UsingEntity<ChannelMember>(
+                    l => l.HasOne<User>().WithMany().HasForeignKey(e => e.MemberId),
+                    r => r.HasOne<Channel>().WithMany().HasForeignKey(e => e.ChannelId));
     }
 }

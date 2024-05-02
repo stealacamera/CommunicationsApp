@@ -5,7 +5,7 @@ using MediatR;
 
 namespace CommunicationsApp.Application.Operations.Channels.Commands.CreateChannel;
 
-public record CreateChannelCommand(int OwnerId, string Name, IList<int> MemberIds) : IRequest<Result<Channel>>;
+public record CreateChannelCommand(int OwnerId, string Name, IList<int> MemberIds) : IRequest<Result<Channel_BriefDescription>>;
 
 public sealed class CreateChannelCommandValidator : AbstractValidator<CreateChannelCommand>
 {

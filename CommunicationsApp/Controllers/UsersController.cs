@@ -9,7 +9,7 @@ public class UsersController : BaseController
 {
     #region API
     [HttpPost("users/query")]
-    public async Task<IList<UserDTO>> Query([FromQuery] string query)
+    public async Task<IList<User>> Query([FromQuery] string query)
     {
         QueryByEmailAndUsernameCommand command = new(query);
         return await Sender.Send(command);

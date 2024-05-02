@@ -19,7 +19,7 @@ public abstract class BaseCommandHandler
         try
         {
             result = await asyncFunc();
-            await transaction.RollbackAsync();
+            await transaction.CommitAsync();
         }
         catch
         {

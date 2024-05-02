@@ -1,4 +1,5 @@
-﻿using CommunicationsApp.Domain.Common;
+﻿using CommunicationsApp.Application.DTOs;
+using CommunicationsApp.Domain.Common;
 using FluentValidation;
 using MediatR;
 
@@ -8,7 +9,7 @@ public record CreateMessageCommand(
     string Message, 
     int UserId, 
     int ChannelId) 
-    : IRequest<Result>;
+    : IRequest<Result<Message>>;
 
 public sealed class CreateMessageCommandValidator : AbstractValidator<CreateMessageCommand>
 {

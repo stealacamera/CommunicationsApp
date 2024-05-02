@@ -32,7 +32,7 @@ internal abstract class BaseStrongEntityRepository<TEntity, TKey>
     {
     }
 
-    public async Task<bool> DoesInstanceExistAsync(TKey id)
+    public virtual async Task<bool> DoesInstanceExistAsync(TKey id)
         => await GetByIdAsync(id) != null;
 
     public virtual async Task<TEntity?> GetByIdAsync(TKey id)

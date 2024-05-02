@@ -1,4 +1,8 @@
 ﻿const createChannelForm = document.getElementById('createChannelForm');
+const channelSidebar = document.getElementById('channelsSidebar');
+
+const createChannelModal = document.getElementById('createChannelModal');
+const modal = bootstrap.Modal.getInstance(createChannelModal);
 
 createChannelForm.addEventListener('submit', e => {
     e.preventDefault();
@@ -9,14 +13,14 @@ createChannelForm.addEventListener('submit', e => {
                                                .map(checkbox => parseInt(checkbox.value))
     };
 
-    //send aja
     $.ajax({
         url: createChannelForm.action,
         contentType: "application/json",
         type: 'POST',
         data: JSON.stringify(data),
         success: data => {
-            console.log('yea');
+            channelSidebar.insertAdjacentHTML('afterbegin', data);
+            modal.hide(); // TODO fix, bootstrap
         }
         ,
         error: xhr =>

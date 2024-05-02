@@ -11,6 +11,27 @@ internal class ChannelsRepository
     {
     }
 
+    public async Task<Channel?> GetByIdAsync(int id, bool includeMembers = false)
+    {
+        if (includeMembers)
+        {
+            var channel = await _untrackedSet.Include(e => e.Members)
+                                             .FirstOrDefaultAsync(e => e.Id == id);
+
+            return channel;
+        }
+        else
+            return await base.GetByIdAsync(id);
+    }
+
+    public override Task<Channel?> GetByIdAsync(int id)
+    {
+        throw new InvalidOperationException();
+    }
+
+    public override async Task<bool> DoesInstanceExistAsync(int id)
+        => await GetByIdAsync(id, false) != null;
+
     public async Task<IEnumerable<Channel>> GetAllForUser(int userId)
     {
         IQueryable<Channel> query = _untrackedSet.Where(
@@ -35,9 +56,10 @@ internal class ChannelsRepository
         return shortenedCode.Remove(shortenedCode.Length - 2); 
     }
 
-    public async Task<bool> DoesUserBelongToChannel(int userId, int channelId)
+    public async Task<bool> DoesUserBelongToChannelAsync(int userId, int channelId)
     {
-        var channel = await GetByIdAsync(channelId);
+        var channel = await _untrackedSet.Include(e => e.Members)
+                                         .FirstOrDefaultAsync(e => e.Id == channelId);
 
         if (channel == null)
             return false;

@@ -4,4 +4,5 @@ namespace CommunicationsApp.Domain.Abstractions.Repositories;
 
 public interface IMessagesRepository : IBaseStrongEntityRepository<Message, int>
 {
+    Task<IList<Message>> GetAllForChannelAsync(int channelId);
 }

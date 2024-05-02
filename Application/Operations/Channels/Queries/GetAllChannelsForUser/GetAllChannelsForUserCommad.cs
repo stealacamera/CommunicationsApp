@@ -5,7 +5,7 @@ using MediatR;
 
 namespace CommunicationsApp.Application.Operations.Channels.Queries.GetAllChannelsForUser;
 
-public sealed record GetAllChannelsForUserCommad(int UserId) : IRequest<Result<IList<Channel>>>;
+public sealed record GetAllChannelsForUserCommad(int UserId) : IRequest<Result<IList<Channel_BriefDescription>>>;
 
 public sealed class GetAllChannelsForUserCommadValidator : AbstractValidator<GetAllChannelsForUserCommad>
 {

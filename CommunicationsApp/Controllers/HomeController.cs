@@ -25,6 +25,7 @@ namespace CommunicationsApp.Controllers
             if (userChannelsResult.Failed)
                 throw new UnauthorizedAccessException();
 
+            ViewBag.CurrentUserId = userId;
             return View(userChannelsResult.Value);
         }
 

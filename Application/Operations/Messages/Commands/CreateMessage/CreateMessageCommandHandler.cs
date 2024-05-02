@@ -1,4 +1,5 @@
 ﻿using CommunicationsApp.Application.Common;
+using CommunicationsApp.Application.DTOs;
 using CommunicationsApp.Application.Common.Errors;
 using CommunicationsApp.Domain.Abstractions;
 using CommunicationsApp.Domain.Common;
@@ -6,19 +7,21 @@ using MediatR;
 
 namespace CommunicationsApp.Application.Operations.Messages.Commands.CreateMessage;
 
-public sealed class CreateMessageCommandHandler : BaseCommandHandler, IRequestHandler<CreateMessageCommand, Result>
+public sealed class CreateMessageCommandHandler : BaseCommandHandler, IRequestHandler<CreateMessageCommand, Result<Message>>
 {
     public CreateMessageCommandHandler(IWorkUnit workUnit) : base(workUnit)
     {
     }
 
-    public async Task<Result> Handle(CreateMessageCommand request, CancellationToken cancellationToken)
+    public async Task<Result<Message>> Handle(CreateMessageCommand request, CancellationToken cancellationToken)
     {
-        if (!await _workUnit.UsersRepository.DoesUserExistAsync(request.UserId))
+        var user = await _workUnit.UsersRepository.GetByIdAsync(request.UserId);
+
+        if (user == null)
             return UserErrors.NotFound;
         else if (!await _workUnit.ChannelsRepository.DoesInstanceExistAsync(request.ChannelId))
             return ChannelErrors.NotFound;
-        else if (await _workUnit.ChannelMembersRepository.GetByIdsAsync(request.UserId, request.ChannelId) == null)
+        else if (!await _workUnit.ChannelsRepository.DoesUserBelongToChannelAsync(request.UserId, request.ChannelId))
             return ChannelMemberErrors.NotFound;
 
         var message = await _workUnit.MessagesRepository
@@ -31,7 +34,12 @@ public sealed class CreateMessageCommandHandler : BaseCommandHandler, IRequestHa
                                      });
 
         await _workUnit.SaveChangesAsync();
-        return Result.Success();
-        //return message;
+
+        return new Message(
+            message.Id,
+            message.Text,
+            message.CreatedAt,
+            new(user.Id, user.UserName, user.Email),
+            message.DeletedAt);
     }
 }

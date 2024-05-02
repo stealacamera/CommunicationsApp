@@ -4,7 +4,7 @@ using MediatR;
 
 namespace CommunicationsApp.Application.Operations.Users.Queries.QueryByEmail;
 
-public record QueryByEmailAndUsernameCommand(string Query) : IRequest<IList<UserDTO>>;
+public record QueryByEmailAndUsernameCommand(string Query) : IRequest<IList<User>>;
 
 public sealed class QueryByEmailAndUsernameCommandValidator : AbstractValidator<QueryByEmailAndUsernameCommand>
 {

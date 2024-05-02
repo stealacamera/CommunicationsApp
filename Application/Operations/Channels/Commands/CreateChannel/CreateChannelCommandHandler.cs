@@ -7,13 +7,13 @@ using MediatR;
 
 namespace CommunicationsApp.Application.Operations.Channels.Commands.CreateChannel;
 
-internal class CreateChannelCommandHandler : BaseCommandHandler, IRequestHandler<CreateChannelCommand, Result<Channel>>
+internal class CreateChannelCommandHandler : BaseCommandHandler, IRequestHandler<CreateChannelCommand, Result<Channel_BriefDescription>>
 {
     public CreateChannelCommandHandler(IWorkUnit workUnit) : base(workUnit)
     {
     }
 
-    public async Task<Result<Channel>> Handle(CreateChannelCommand request, CancellationToken cancellationToken)
+    public async Task<Result<Channel_BriefDescription>> Handle(CreateChannelCommand request, CancellationToken cancellationToken)
     {
         int maxNrMembers = 250;
 
@@ -52,7 +52,7 @@ internal class CreateChannelCommandHandler : BaseCommandHandler, IRequestHandler
                                });
 
             await _workUnit.SaveChangesAsync();
-            return new Channel(channel.Id, channel.Name);
+            return new Channel_BriefDescription(channel.Id, channel.Name);
         });
     }
 }
