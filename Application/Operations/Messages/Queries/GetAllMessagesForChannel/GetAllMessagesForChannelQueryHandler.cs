@@ -7,19 +7,19 @@ using MediatR;
 
 namespace CommunicationsApp.Application.Operations.Messages.Queries.GetAllMessagesForChannel;
 
-public sealed class GetAllMessagesForChannelCommandHandler : BaseCommandHandler, IRequestHandler<GetAllMessagesForChannelCommand, Result<IList<Message>>>
+public sealed class GetAllMessagesForChannelQueryHandler : BaseCommandHandler, IRequestHandler<GetAllMessagesForChannelQuery, Result<IList<Message>>>
 {
-    public GetAllMessagesForChannelCommandHandler(IWorkUnit workUnit) : base(workUnit)
+    public GetAllMessagesForChannelQueryHandler(IWorkUnit workUnit) : base(workUnit)
     {
     }
 
-    public async Task<Result<IList<Message>>> Handle(GetAllMessagesForChannelCommand request, CancellationToken cancellationToken)
+    public async Task<Result<IList<Message>>> Handle(GetAllMessagesForChannelQuery request, CancellationToken cancellationToken)
     {
         var channel = await _workUnit.ChannelsRepository.GetByIdAsync(request.ChannelId);
 
         if (channel == null)
             return ChannelErrors.NotFound;
-        else if (!await _workUnit.ChannelsRepository.DoesUserBelongToChannelAsync(request.RequesterId, request.ChannelId))
+        else if (!await _workUnit.ChannelMembersRepository.IsUserMemberOfChannelAsync(request.RequesterId, request.ChannelId))
             return ChannelMemberErrors.UserIsNotMemberOfChannel;
 
         var messages = await _workUnit.MessagesRepository.GetAllForChannelAsync(request.ChannelId);

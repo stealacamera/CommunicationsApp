@@ -7,13 +7,13 @@ using MediatR;
 
 namespace CommunicationsApp.Application.Operations.Users.Queries.GetUserById;
 
-public sealed class GetUserByIdCommandHandler : BaseCommandHandler, IRequestHandler<GetUserByIdCommand, Result<User>>
+public sealed class GetUserByIdQueryHandler : BaseCommandHandler, IRequestHandler<GetUserByIdQuery, Result<User>>
 {
-    public GetUserByIdCommandHandler(IWorkUnit workUnit) : base(workUnit)
+    public GetUserByIdQueryHandler(IWorkUnit workUnit) : base(workUnit)
     {
     }
 
-    public async Task<Result<User>> Handle(GetUserByIdCommand request, CancellationToken cancellationToken)
+    public async Task<Result<User>> Handle(GetUserByIdQuery request, CancellationToken cancellationToken)
     {
         var user = await _workUnit.UsersRepository.GetByIdAsync(request.Id);
 

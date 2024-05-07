@@ -4,13 +4,19 @@ using MediatR;
 
 namespace CommunicationsApp.Application.Operations.Channels.Commands.EditChannel;
 
-public record EditChannelCommand(int ChannelId, string NewName) : IRequest<Result>;
+public record EditChannelCommand(int RequesterId, int ChannelId, string NewName) : IRequest<Result>;
 
 public sealed class EditChannelCommandValidator : AbstractValidator<EditChannelCommand>
 {
     public EditChannelCommandValidator()
     {
-        RuleFor(e => e.ChannelId).NotEmpty();
+        RuleFor(e => e.RequesterId)
+            .NotEmpty()
+            .GreaterThan(0);
+
+        RuleFor(e => e.ChannelId)
+            .NotEmpty()
+            .GreaterThan(0);
 
         RuleFor(e => e.NewName)
             .NotEmpty()

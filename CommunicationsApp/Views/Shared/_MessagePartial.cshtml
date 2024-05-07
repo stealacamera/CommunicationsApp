@@ -5,28 +5,30 @@
     bool isCurrentUserTheSender = Model.User.Id == currentUserId;
 }
 
-<div id="openMessage@(Model.Id)" class="media media-chat @(isCurrentUserTheSender ? "media-chat-reverse" : "")">
-    @if (!isCurrentUserTheSender)
-    {
-        <p>@Model.User.UserName</p>
-    }
+<div id="openMessage@(Model.Id)" data-id="@Model.Id" class="message-container @(isCurrentUserTheSender ? "sender-message-container" : "")">
+    <div class="message-bubble @(isCurrentUserTheSender ? "sender-message-bubble" : "")">
+        <div class="d-flex">
+            @if (!isCurrentUserTheSender)
+            {
+                <p class="text-start fw-bold">@Model.User.UserName</p>
+            }
 
-    @if (!Model.DeletedAt.HasValue)
-    {
-        <div class="dropup badge">
-            <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"></button>
-            <ul class="dropdown-menu">
-                <li>
-                    <form asp-controller="Messages" asp-action="Delete" asp-route-id="@Model.Id">
-                        <input type="submit" value="Delete" class="dropdown-item text-danger" />
-                    </form>
-                </li>
-            </ul>
+            @if (isCurrentUserTheSender && !Model.DeletedAt.HasValue)
+            {
+                <div data-options-list class="ms-auto dropup badge">
+                    <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"></button>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <form data-delete-form asp-controller="Messages" asp-action="Delete" asp-route-id="@Model.Id">
+                                <input type="submit" value="Delete" class="dropdown-item text-danger" />
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            }
         </div>
-    }
 
-    <div class="media-body">
-        <p>@(Model.DeletedAt.HasValue ? "<span class=fst-italic>Message was deleted</span>" : Model.Text)</p>
-        <p class="meta">@Model.CreatedAt.ToShortTimeString()</p>
+        <p data-message-text class="text-start">@(Model.DeletedAt.HasValue ? "<span class=fst-italic>Message was deleted</span>" : Model.Text)</p>
+        <p class="fst-italic @(isCurrentUserTheSender ? "text-end" : "text-start")">@Model.CreatedAt.ToShortTimeString()</p>
     </div>
 </div>

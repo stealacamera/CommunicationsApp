@@ -5,12 +5,14 @@ using MediatR;
 
 namespace CommunicationsApp.Application.Operations.Users.Queries.GetUserById;
 
-public record GetUserByIdCommand(int Id) : IRequest<Result<User>>;
+public record GetUserByIdQuery(int Id) : IRequest<Result<User>>;
 
-public sealed class GetUserByIdCommandValidator : AbstractValidator<GetUserByIdCommand>
+public sealed class GetUserByIdCommandValidator : AbstractValidator<GetUserByIdQuery>
 {
     public GetUserByIdCommandValidator()
     {
-        RuleFor(e => e.Id).NotEmpty();
+        RuleFor(e => e.Id)
+            .NotEmpty()
+            .GreaterThan(0);
     }
 }

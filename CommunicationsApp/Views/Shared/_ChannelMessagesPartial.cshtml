@@ -1,6 +1,6 @@
 ﻿@model CommunicationsApp.Web.Models.ChannelOverviewVM
 
-<div>
+<div class="chat-container" data-open-chat-code="@Model.Channel.Code">
     <div class="d-flex flex-row">
         <p class="flex-grow-1 fw-bold">@Model.Channel.Name</p>
         <p>Channel code: @Model.Channel.Code</p>
@@ -12,12 +12,12 @@
             <ul class="dropdown-menu">
                 @foreach (var member in Model.Channel.Members)
                 {
-                    <li>@member.UserName (@member.Email)</li>
+                    <li class="dropdown-item"><span class="fw-bold">@member.Member.UserName</span> @member.Member.Email</li>
                 }
             </ul>
         </div>
     </div>
-    <div id="channelMessages">
+    <div id="channelMessages" class="messages-container">
         @if (!Model.Messages.Any())
         {
             <p>No messages ...</p>
@@ -32,6 +32,7 @@
     </div>
     <form id="messageSendForm" asp-controller="Messages" asp-action="Create" asp-route-id="@Model.Channel.Id">
         <div class="input-group mt-3 mb-3">
+            <input type="hidden" id="channelCode" value="@Model.Channel.Code" />
             <input id="messageInput" type="text" class="form-control" placeholder="Write your message" />
 
             <button class="btn btn-outline-secondary" type="submit">

@@ -21,7 +21,8 @@ public sealed class CreateMessageCommandHandler : BaseCommandHandler, IRequestHa
             return UserErrors.NotFound;
         else if (!await _workUnit.ChannelsRepository.DoesInstanceExistAsync(request.ChannelId))
             return ChannelErrors.NotFound;
-        else if (!await _workUnit.ChannelsRepository.DoesUserBelongToChannelAsync(request.UserId, request.ChannelId))
+        else if (!await _workUnit.ChannelMembersRepository
+                                 .IsUserMemberOfChannelAsync(request.UserId, request.ChannelId))
             return ChannelMemberErrors.NotFound;
 
         var message = await _workUnit.MessagesRepository

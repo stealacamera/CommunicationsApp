@@ -9,10 +9,10 @@ public class UsersController : BaseController
 {
     #region API
     [HttpPost("users/query")]
-    public async Task<IList<User>> Query([FromQuery] string query)
+    public async Task<IActionResult> Query([FromQuery] string query, bool excludeRequester = true)
     {
-        QueryByEmailAndUsernameCommand command = new(query);
-        return await Sender.Send(command);
+        QueryByEmailAndUsernameQuery command = new(query, excludeRequester ? GetCurrentUserId() : null);
+        return Ok(await Sender.Send(command));
     }
     #endregion
 }

@@ -19,7 +19,7 @@ namespace CommunicationsApp.Controllers
             if (userId == 0)
                 return View("Welcome");
 
-            GetAllChannelsForUserCommad command = new(userId);
+            GetAllChannelsForUserQuery command = new(userId);
             var userChannelsResult = await Sender.Send(command);
 
             if (userChannelsResult.Failed)

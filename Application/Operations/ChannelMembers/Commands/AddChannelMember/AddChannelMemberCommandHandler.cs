@@ -1,5 +1,6 @@
 ﻿using CommunicationsApp.Application.Common;
 using CommunicationsApp.Application.Common.Errors;
+using CommunicationsApp.Application.DTOs;
 using CommunicationsApp.Domain.Abstractions;
 using CommunicationsApp.Domain.Common;
 using MediatR;
@@ -29,6 +30,5 @@ internal class AddChannelMemberCommandHandler : BaseCommandHandler, IRequestHand
 
         await _workUnit.SaveChangesAsync();
         return Result.Success();
-        //return member;
     }
 }

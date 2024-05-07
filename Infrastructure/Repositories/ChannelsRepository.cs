@@ -11,35 +11,8 @@ internal class ChannelsRepository
     {
     }
 
-    public async Task<Channel?> GetByIdAsync(int id, bool includeMembers = false)
-    {
-        if (includeMembers)
-        {
-            var channel = await _untrackedSet.Include(e => e.Members)
-                                             .FirstOrDefaultAsync(e => e.Id == id);
-
-            return channel;
-        }
-        else
-            return await base.GetByIdAsync(id);
-    }
-
-    public override Task<Channel?> GetByIdAsync(int id)
-    {
-        throw new InvalidOperationException();
-    }
-
     public override async Task<bool> DoesInstanceExistAsync(int id)
-        => await GetByIdAsync(id, false) != null;
-
-    public async Task<IEnumerable<Channel>> GetAllForUser(int userId)
-    {
-        IQueryable<Channel> query = _untrackedSet.Where(
-            e => e.OwnerId == userId
-            || e.Members.Where(e => e.Id == userId).Any());
-
-        return await query.ToListAsync();
-    }
+        => await GetByIdAsync(id) != null;
 
     public override Task<Channel> AddAsync(Channel entity)
     {
@@ -56,15 +29,17 @@ internal class ChannelsRepository
         return shortenedCode.Remove(shortenedCode.Length - 2); 
     }
 
-    public async Task<bool> DoesUserBelongToChannelAsync(int userId, int channelId)
+    public async Task<Channel?> GetByCodeAsync(string code)
     {
-        var channel = await _untrackedSet.Include(e => e.Members)
-                                         .FirstOrDefaultAsync(e => e.Id == channelId);
+        IQueryable<Channel> query = _untrackedSet.Where(e => e.Code == code);
+        return await query.FirstOrDefaultAsync();
+    }
 
-        if (channel == null)
-            return false;
+    public async Task<IEnumerable<Channel>> GetAllForUserAsync(int userId)
+    {
+        IQueryable<Channel> query = _untrackedSet.Where(
+            e => e.Members.Where(e => e.Id == userId).Any());
 
-        return channel.OwnerId == userId 
-               || channel.Members.Where(e => e.Id == userId).Any();
+        return await query.ToListAsync();
     }
 }

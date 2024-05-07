@@ -5,11 +5,11 @@ using MediatR;
 
 namespace CommunicationsApp.Application.Operations.Channels.Queries.GetAllChannelsForUser;
 
-public sealed record GetAllChannelsForUserCommad(int UserId) : IRequest<Result<IList<Channel_BriefDescription>>>;
+public sealed record GetAllChannelsForUserQuery(int UserId) : IRequest<Result<IList<Channel_BriefOverview>>>;
 
-public sealed class GetAllChannelsForUserCommadValidator : AbstractValidator<GetAllChannelsForUserCommad>
+public sealed class GetAllChannelsForUserQueryValidator : AbstractValidator<GetAllChannelsForUserQuery>
 {
-    public GetAllChannelsForUserCommadValidator()
+    public GetAllChannelsForUserQueryValidator()
     {
         RuleFor(e => e.UserId).NotEmpty();
     }

@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace CommunicationsApp.Infrastructure.Data.Configurations;
+namespace CommunicationsApp.Infrastructure.Configurations;
 
 internal class ChannelMemberConfiguration : IEntityTypeConfiguration<ChannelMember>
 {
@@ -21,6 +21,12 @@ internal class ChannelMemberConfiguration : IEntityTypeConfiguration<ChannelMemb
         builder.HasOne<Channel>()
                .WithMany()
                .HasForeignKey(e => e.ChannelId)
+               .OnDelete(DeleteBehavior.Restrict)
+               .IsRequired();
+
+        builder.HasOne<ChannelRole>()
+               .WithMany()
+               .HasForeignKey(e => e.RoleId)
                .OnDelete(DeleteBehavior.Restrict)
                .IsRequired();
     }

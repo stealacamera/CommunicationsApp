@@ -1,4 +1,5 @@
 ﻿using CommunicationsApp.Application.Common;
+using CommunicationsApp.Application.Common.Enums;
 using CommunicationsApp.Application.Common.Errors;
 using CommunicationsApp.Domain.Abstractions;
 using CommunicationsApp.Domain.Common;
@@ -19,9 +20,15 @@ public sealed class DeleteChannelCommandHandler : BaseCommandHandler, IRequestHa
         if (channel == null)
             return ChannelErrors.NotFound;
 
+        var membership = await _workUnit.ChannelMembersRepository
+                                        .GetByIdsAsync(request.RequesterId, channel.Id);
+
+        if (membership == null || membership.RoleId != ChannelRole.Owner)
+            return UserErrors.Unauthorized;
+
         channel.DeletedAt = DateTime.Now;
         await _workUnit.SaveChangesAsync();
-        
+
         return Result.Success();
     }
 }

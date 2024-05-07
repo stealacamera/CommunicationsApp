@@ -1,4 +1,4 @@
-﻿@model List<CommunicationsApp.Application.DTOs.Channel_BriefDescription>
+﻿@model List<CommunicationsApp.Application.DTOs.Channel_BriefOverview>
 
 @section Styles {
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
@@ -33,7 +33,6 @@
     </div>
 </div>
 
-
 <div class="d-flex flex-row">
     <div class="d-flex flex-column align-items-stretch flex-shrink-0 bg-white" style="width: 380px;">
         <p class="d-flex align-items-center flex-shrink-0 p-3 link-dark text-decoration-none border-bottom">
@@ -63,7 +62,9 @@
 @section Scripts {
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
     <script src="/js/signalr/dist/browser/signalr.js"></script>
-    <script src="/js/createChannelAjax.js"></script>
+    <script src="/js/chatConnectionSetup.js"></script>
+
     <script src="/js/memberSearchAjax.js"></script>
+    <script src="/js/createChannelAjax.js"></script>
     <script src="/js/showChannelAjax.js"></script>
 }

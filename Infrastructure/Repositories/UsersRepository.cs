@@ -59,7 +59,7 @@ internal class UsersRepository : IUsersRepository
         return user;
     }
 
-    public async Task<IEnumerable<User>> QueryByEmailAndUsernameAsync(string queryString)
+    public async Task<IEnumerable<User>> QueryByEmailAndUsernameAsync(string queryString, int? excludeUserId = null)
     {
         if(queryString.IsNullOrEmpty())
             return new List<User>();
@@ -67,6 +67,9 @@ internal class UsersRepository : IUsersRepository
         IQueryable<User> query = _untrackedSet.Where(
             e => e.Email.Contains(queryString) 
             || e.UserName.Contains(queryString));
+
+        if (excludeUserId.HasValue)
+            query = query.Where(e => e.Id != excludeUserId.Value);
 
         return await query.ToListAsync();
     }

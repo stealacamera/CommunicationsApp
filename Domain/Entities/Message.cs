@@ -2,7 +2,7 @@
 
 namespace CommunicationsApp.Domain.Entities;
 
-public class Message : BaseSoftDeleteEntity<int>
+public class Message : BaseSoftDeleteEntity
 {
     public int OwnerId { get; set; }
     public int ChannelId { get; set; }

@@ -15,4 +15,12 @@ internal class MessagesRepository : BaseSoftDeleteRepository<Message, int>, IMes
         IQueryable<Message> query = _untrackedSet.Where(e => e.ChannelId == channelId);
         return await query.ToListAsync();
     }
+
+    public async Task<Message?> GetLatestForChannelAsync(int channelId)
+    {
+        IQueryable<Message> query = _untrackedSet.Where(e => e.ChannelId == channelId);
+        query = query.OrderByDescending(e => e.CreatedAt);
+
+        return await query.FirstOrDefaultAsync();
+    }
 }

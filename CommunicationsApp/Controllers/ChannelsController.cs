@@ -1,4 +1,5 @@
-﻿using CommunicationsApp.Application.Operations.Channels.Commands.CreateChannel;
+﻿using CommunicationsApp.Application.DTOs;
+using CommunicationsApp.Application.Operations.Channels.Commands.CreateChannel;
 using CommunicationsApp.Application.Operations.Channels.Queries.GetChannelById;
 using CommunicationsApp.Application.Operations.Messages.Queries.GetAllMessagesForChannel;
 using CommunicationsApp.Web.Models;
@@ -15,25 +16,21 @@ public class ChannelsController : BaseController
         CreateChannelCommand command = new(GetCurrentUserId(), model.ChannelName, model.MemberIds.ToList());
         var newChannelResult = await Sender.Send(command);
 
-        if (newChannelResult.Succeded)
-        {
-            Response.StatusCode = StatusCodes.Status201Created;
-            return PartialView("_ChannelSidebarGroupPartial", newChannelResult.Value);
-        }
-        else
-            return BadRequest(newChannelResult.Error.Description);
+        return newChannelResult.Failed
+               ? BadRequest(newChannelResult.Error.Description)
+               : Created(nameof(Create), new Channel_BriefOverview(newChannelResult.Value, null));
     }
 
     [HttpGet("channels/{id:int}")]
     public async Task<IActionResult> Get(int id)
     {
-        GetChannelByIdCommand channelCommand = new(id, GetCurrentUserId());
+        GetChannelByIdQuery channelCommand = new(id, GetCurrentUserId());
         var channelResult = await Sender.Send(channelCommand);
 
         if (channelResult.Failed)
             return BadRequest(channelResult.Error.Description);
 
-        GetAllMessagesForChannelCommand command = new(id, GetCurrentUserId());
+        GetAllMessagesForChannelQuery command = new(id, GetCurrentUserId());
         var messagesResult = await Sender.Send(command);
 
         if (messagesResult.Succeded)

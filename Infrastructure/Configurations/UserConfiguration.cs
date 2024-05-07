@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace CommunicationsApp.Infrastructure.Data.Configurations;
+namespace CommunicationsApp.Infrastructure.Configurations;
 
 internal class UserConfiguration : IEntityTypeConfiguration<User>
 {
