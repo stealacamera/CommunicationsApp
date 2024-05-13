@@ -24,12 +24,15 @@ Array.from(channelsSidebar.children).forEach(channel => {
 
                 messagesViewingDiv.innerHTML = data;
                 addMessagingFunctionality();
+                addEditFunctionality();
 
-                const chatDOM = domParser.parseFromString(data, 'text/html').body.firstElementChild;
-                const chatMessages = chatDOM.querySelector('#channelMessages');
+                const messages = document.getElementById('channelMessages');
+                messages.scrollTop = messages.scrollHeight;
 
-                Array.from(chatMessages.children)
+                Array.from(messages.children)
                     .forEach(message => addDeleteFunctionality(message));
+
+                addPaginationScrollFunctionality(messages);
             },
             error: xhr =>
                 Toastify({
@@ -40,7 +43,6 @@ Array.from(channelsSidebar.children).forEach(channel => {
                     position: "right",
                 }).showToast()
         });
-
     });
 })
 
@@ -48,13 +50,6 @@ Array.from(channelsSidebar.children).forEach(channel => {
 connection.on('ReceiveMessage', (message, channelCode) => {
     const channelMessagesDiv = document.getElementById('channelMessages');
     const currOpenChannel = document.getElementsByClassName('chat-container')[0];
-    const sidebarChannel = document.querySelector(`[data-sidebar-channel-code='${channelCode}']`);
-
-    // Update sidebar w/ latest message
-    if (sidebarChannel) {
-        const latestMessageContainer = sidebarChannel.querySelector('[data-latest-message-for]');
-        latestMessageContainer.textContent = `${message.user.userName}: ${message.text}`;
-    }
 
     // If the given chat is open, show message
     // Otherwise, highlight channel in the sidebar if there
@@ -63,14 +58,18 @@ connection.on('ReceiveMessage', (message, channelCode) => {
             sidebarChannel.classList.add('list-group-item-primary');
     }
     else
-        appendMessagePartial(message, channelMessagesDiv)
+        appendMessagePartial(message, channelMessagesDiv);
+
+    // Update sidebar with latest message
+    updateSidebarChannelPreviewMessage(channelCode, message.id, message.user.userName, message.Text);
 });
 
-connection.on('DeleteMessage', messageId => {
+connection.on('DeleteMessage', (messageId, channelCode) => {
+    // Delete message if chat is open
     const messageContainer = document.getElementById(`openMessage${messageId}`);
 
     if (messageContainer) {
-        const textContainer = messageDivElement.querySelector('[data-message-text]');
+        const textContainer = document.getElementById(`openMessageText${messageId}`);
         textContainer.innerHTML = '<span class="fst-italic">Message was deleted</span>';
 
         const optionsList = messageContainer.querySelector('[data-options-list]');
@@ -78,13 +77,15 @@ connection.on('DeleteMessage', messageId => {
         if (optionsList)
             optionsList.remove();
     }
+
+    // Delete message in preview
+    updateSidebarChannelPreviewMessage(channelCode, messageId, None, None);
 })
 
 function addMessagingFunctionality() {
     const sendMessageForm = document.getElementById('messageSendForm');
     const messageInput = document.getElementById('messageInput'),
         submitBtn = sendMessageForm.querySelector('button[type="submit"]');
-
 
     const spinnerIconString = '<div class="spinner-border" role="status">' +
         '<span class="visually-hidden">Loading...</span></div>',
@@ -107,10 +108,6 @@ function addMessagingFunctionality() {
                 // Send message to channel server
                 connection.invoke("SendMessageToChannel", newMessage, channelCode);
 
-                // Add delete functionality
-                const newMessageElement = domParser.parseFromString(messageHtml, 'text/html').body.firstElementChild;
-                addDeleteFunctionality(newMessageElement);
-
                 messageInput.value = '';
             },
             error: () => errorToast.showToast()
@@ -118,19 +115,86 @@ function addMessagingFunctionality() {
     });
 }
 
-function appendMessagePartial(messageData, chatBoxContainer) {
+function appendMessagePartial(messageData, chatBoxContainer, appendToEnd = true, isAsync = true) {
     $.ajax({
+        async: isAsync,
         url: 'partialViews/messagePartial',
         contentType: 'application/json',
         type: 'POST',
         data: JSON.stringify(messageData),
-        success: messagePartial => chatBoxContainer.insertAdjacentHTML('beforeend', messagePartial),
+        success: messagePartial => {
+            chatBoxContainer.insertAdjacentHTML(appendToEnd ? 'beforeend' : 'afterbegin', messagePartial);
+            addDeleteFunctionality(document.getElementById(`openMessage${messageData.id}`));
+        },
         error: () => errorToast.showToast()
     });
 }
 
+function addEditFunctionality() {
+    const channelName = document.getElementById('channelName');
+    const editChannelNameBtn = document.getElementById('editChannelNameBtn');
+
+    if (channelName && editChannelNameBtn) {
+        editChannelNameBtn.addEventListener('click', () => {
+            channelName.contentEditable = true;
+            channelName.focus();
+
+            channelName.addEventListener('keydown', e => {
+                if (e.code === 'Enter') {
+                    e.preventDefault();
+
+                    $.ajax({
+                        url: `channels/${editChannelNameBtn.dataset.channelId}`,
+                        contentType: 'application/json',
+                        type: 'PATCH',
+                        data: JSON.stringify(channelName.textContent),
+                        success: () => {
+                            channelName.contentEditable = false;
+                            updateSidebarChannelName(editChannelNameBtn.dataset.channelCode, channelName.textContent);
+
+                            Toastify({
+                                text: "Channel name updated successfully",
+                                duration: 3000,
+                                close: true,
+                                gravity: "bottom",
+                                position: "right",
+                            }).showToast();
+                        },
+                        error: () => errorToast.showToast()
+                    })
+                }
+            });
+        })
+    }
+}
+
+function addPaginationScrollFunctionality(channelMessagesContainer) {
+    channelMessagesContainer.addEventListener('scrollend', () => {
+        /* Don't call for messages if user hasn't scrolled to the top
+           or the cursor is at the end */
+        if (channelMessagesContainer.scrollTop != 0
+            || channelMessagesContainer.dataset.nextCursor == 0)
+            return;
+
+        $.ajax({
+            url: `channels/${channelMessagesContainer.dataset.channelId}/messages?cursor=${channelMessagesContainer.dataset.nextCursor}&pageSize=12`,
+            type: 'GET',
+            success: paginatedMessages => {
+                channelMessagesContainer.dataset.nextCursor = paginatedMessages.nextCursor;
+                const messagesList = Array.from(paginatedMessages.values);
+
+                if (messagesList.length > 0)
+                    messagesList.forEach(messageData => appendMessagePartial(messageData, channelMessagesContainer, false, false));
+                else
+                    channelMessagesContainer.dataset.nextCursor = 0;
+            },
+            error: () => errorToast.showToast()
+        });
+    });
+}
+
 function addDeleteFunctionality(messageDivElement) {
-    const deleteForm = messageDivElement.querySelector('form[data-delete-form]');
+    const deleteForm = document.querySelector(`[data-delete-form-id="${messageDivElement.dataset.id}"]`);
 
     if (!deleteForm)
         return;
@@ -138,11 +202,41 @@ function addDeleteFunctionality(messageDivElement) {
     deleteForm.addEventListener('submit', e => {
         e.preventDefault();
 
+        const currOpenChat = document.querySelector('[data-open-chat-code]');
+
+        if (!currOpenChat)
+            errorToast.showToast();
+
         $.ajax({
             url: deleteForm.action,
             type: 'DELETE',
-            success: () => connection.invoke('DeleteMessageFromChannel', messageDivElement.dataset.id),
+            success: () => connection.invoke('DeleteMessageFromChannel', parseInt(messageDivElement.dataset.id), currOpenChat.dataset.openChatCode),
             error: () => errorToast.showToast()
         });
     })
+}
+
+function updateSidebarChannelName(channelCode, newName) {
+    const sidebarChannel = document.querySelector(`[data-sidebar-channel-code='${channelCode}']`);
+
+    if (sidebarChannel)
+        document.getElementById(`sidebarChannelName${channelCode}`).textContent = newName;
+}
+
+function updateSidebarChannelPreviewMessage(channelCode, messageId, messageSenderUserName, messageText) {
+    const sidebarChannel = document.querySelector(`[data-sidebar-channel-code='${channelCode}']`);
+
+    if (sidebarChannel) {
+        const latestMessageContainer = sidebarChannel.querySelector('[data-latest-message-for]');
+
+        // If message is deleted, showcase
+        // Otherwise, update text
+        if (messageSenderUserName == None) {
+            if (latestMessageContainer.id == `latestMessage${messageId}`)
+                latestMessageContainer.textContent = `${latestMessageContainer.textContent.split(':')[0]}: Message was deleted`
+        } else {
+            latestMessageContainer.id = latestMessageContainer.replace(/[0-9]/g, '') + messageId;
+            latestMessageContainer.textContent = `${messageSenderUserName}: ${messageText}`;
+        }
+    }
 }

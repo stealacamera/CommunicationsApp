@@ -7,7 +7,7 @@ resendEmailVerificationForm.addEventListener('submit', e => {
         url: resendEmailVerificationForm.action,
         contentType: "application/json",
         type: 'POST',
-        data: JSON.stringify({ email: resendEmailVerificationForm.elements['email'].value }),
+        data: JSON.stringify(resendEmailVerificationForm.elements['email'].value),
         success: () =>
             Toastify({
                 text: "Email was sent successfully",

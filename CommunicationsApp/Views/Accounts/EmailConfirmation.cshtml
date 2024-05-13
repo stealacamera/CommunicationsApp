@@ -1,0 +1,21 @@
+﻿@model bool?
+
+<h3>Please check your email to confirm your account so you can log in</h3>
+
+@if (TempData["FailedConfirmation"] != null)
+{
+    <div class="alert alert-danger" role="alert">
+        @TempData["FailedConfirmation"]
+    </div>
+}
+
+<partial name="_ResendEmailConfirmationFormPartial" />
+
+@section Styles {
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+}
+
+@section Scripts {
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script src="~/js/emailVerificationAjax.js"></script>
+}

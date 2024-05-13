@@ -1,6 +1,9 @@
 ﻿namespace CommunicationsApp.Domain.Common;
 
-public abstract class BaseStrongEntity<T>
+
+public abstract class BaseEntity { }
+
+public abstract class BaseStrongEntity<T> : BaseEntity
 {
     public T Id { get; set; }
 }

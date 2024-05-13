@@ -1,43 +1,29 @@
 ﻿using CommunicationsApp.Application.Operations.Channels.Queries.GetAllChannelsForUser;
-using CommunicationsApp.Models;
 using CommunicationsApp.Web.Controllers;
 using Microsoft.AspNetCore.Mvc;
-using System.Diagnostics;
 
-namespace CommunicationsApp.Controllers
+namespace CommunicationsApp.Controllers;
+
+public class HomeController : BaseController
 {
-    public class HomeController : BaseController
+    public HomeController(IConfiguration configuration) : base(configuration)
     {
-        public HomeController()
-        {
-        }
+    }
 
-        public async Task<IActionResult> Index()
-        {
-            int userId = GetCurrentUserId();
+    public async Task<IActionResult> Index()
+    {
+        int userId = GetCurrentUserId();
 
-            if (userId == 0)
-                return View("Welcome");
+        if (userId == 0)
+            return View("Welcome");
 
-            GetAllChannelsForUserQuery command = new(userId);
-            var userChannelsResult = await Sender.Send(command);
+        GetAllChannelsForUserQuery command = new(userId);
+        var userChannelsResult = await Sender.Send(command);
 
-            if (userChannelsResult.Failed)
-                throw new UnauthorizedAccessException();
+        if (userChannelsResult.Failed)
+            throw new UnauthorizedAccessException();
 
-            ViewBag.CurrentUserId = userId;
-            return View(userChannelsResult.Value);
-        }
-
-        public IActionResult Privacy()
-        {
-            return View();
-        }
-
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-        }
+        ViewBag.CurrentUserId = userId;
+        return View(userChannelsResult.Value);
     }
 }

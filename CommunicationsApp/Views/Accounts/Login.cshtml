@@ -1,0 +1,64 @@
+﻿@model CommunicationsApp.Web.Models.LoginDTO
+
+@if (TempData["EmailConfirmed"] != null)
+{
+    <div class="alert alert-primary" role="alert">
+        @TempData["EmailConfirmed"]
+    </div>
+}
+
+@if (ViewData["NonexistantUser"] != null)
+{
+    <div class="alert alert-primary" role="alert">
+        @ViewData["NonexistantUser"]
+    </div>
+}
+else if (ViewData["ExternalError"] != null)
+{
+    <div class="alert alert-primary" role="alert">
+        @ViewData["ExternalError"]
+    </div>
+}
+
+<div class="d-flex gap-5">
+    <div>
+        <h3>Log in</h3>
+        <form asp-action="Login">
+            <div class="form-group mb-3">
+                <label asp-for="Email"></label>
+                <input asp-for="Email" type="email" class="form-control" aria-describedby="emailHelp" placeholder="user@email.com">
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div class="form-group mb-3">
+                <label asp-for="Password"></label>
+                <input asp-for="Password" type="password" class="form-control" placeholder="Password">
+                <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+            <div class="form-group mb-3">
+                <input type="checkbox" asp-for="RememberMe" />
+                <label asp-for="RememberMe"></label>
+            </div>
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+            <div class="form-group">
+                <input type="submit" value="Sign up" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+
+    <div>
+        @if (Model.AuthSchemes.Any())
+        {
+            <h3>Or log in through: </h3>
+            <form asp-action="ExternalLogin">
+                <div>
+                    @foreach (var scheme in Model.AuthSchemes)
+                    {
+                        <button type="submit" class="btn btn-primary" name="provider" value="@scheme.Name">
+                            @scheme.DisplayName
+                        </button>
+                    }
+                </div>
+            </form>
+        }
+    </div>
+</div>

@@ -1,4 +1,5 @@
 ﻿using CommunicationsApp.Domain.Abstractions;
+using CommunicationsApp.Infrastructure.Email.Options;
 using MailKit.Net.Smtp;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.Extensions.Options;

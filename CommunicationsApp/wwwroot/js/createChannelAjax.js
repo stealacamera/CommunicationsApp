@@ -18,30 +18,7 @@ createChannelForm.addEventListener('submit', e => {
         contentType: "application/json",
         type: 'POST',
         data: JSON.stringify(data),
-        success: newChannel => {
-            // Add user to channel server
-            connection.invoke('JoinChannel', newChannel.code);
-
-            // Show new channel in sidebar
-            $.ajax({
-                url: 'partialViews/channelSidebarPartial',
-                type: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify(newChannel),
-                success: sidebarView => {
-                    channelSidebar.insertAdjacentHTML('afterbegin', sidebarView);
-                    modal.hide(); // TODO fix, bootstrap
-                },
-                error: () => Toastify({
-                    text: 'Something went wrong. Please refresh the page if problem persists',
-                    duration: 3000,
-                    close: true,
-                    gravity: "bottom",
-                    position: "right",
-                }).showToast()
-            });
-
-        },
+        success: newChannel => connection.invoke('JoinChannel', newChannel.code),
         error: xhr =>
             Toastify({
                 text: xhr.responseText,

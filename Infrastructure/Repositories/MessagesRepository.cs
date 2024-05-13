@@ -1,4 +1,5 @@
 ﻿using CommunicationsApp.Domain.Abstractions.Repositories;
+using CommunicationsApp.Domain.Common;
 using CommunicationsApp.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,16 +11,18 @@ internal class MessagesRepository : BaseSoftDeleteRepository<Message, int>, IMes
     {
     }
 
-    public async Task<IList<Message>> GetAllForChannelAsync(int channelId)
+    public async Task<CursorPaginatedEnumerable<int, Message>> GetAllForChannelAsync(int channelId, int? cursor, int pageSize)
     {
         IQueryable<Message> query = _untrackedSet.Where(e => e.ChannelId == channelId);
-        return await query.ToListAsync();
+        query = query.OrderByDescending(e => e.Id);
+
+        return await CursorPaginatedEnumerable<int, Message>.CreateAsync(cursor, pageSize, nameof(Message.Id), query, getOlderValues: false);
     }
 
     public async Task<Message?> GetLatestForChannelAsync(int channelId)
     {
         IQueryable<Message> query = _untrackedSet.Where(e => e.ChannelId == channelId);
-        query = query.OrderByDescending(e => e.CreatedAt);
+        query = query.OrderByDescending(e => e.Id);
 
         return await query.FirstOrDefaultAsync();
     }

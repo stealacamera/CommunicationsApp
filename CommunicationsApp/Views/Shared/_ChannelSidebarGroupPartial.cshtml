@@ -2,13 +2,13 @@
 
 <div data-sidebar-channel-id="@Model.Channel.Id" data-sidebar-channel-code="@Model.Channel.Code" class="list-group-item list-group-item-action py-3 lh-tight user-select-none pe-auto">
     <div class="d-flex w-100 align-items-center justify-content-between">
-        <strong class="mb-1">@Model.Channel.Name</strong>
+        <strong id="sidebarChannelName@(Model.Channel.Code)" class="mb-1">@Model.Channel.Name</strong>
     </div>
 
-    <div data-latest-message-for="@(Model.Channel.Code)" class="col-10 mb-1 small text-truncate">
-        @if (Model.LatestMessage != null)
-        {
+    @if (Model.LatestMessage != null)
+    {
+        <div id="latestMessage@(Model.LatestMessage.Id)" data-latest-message-for="@(Model.Channel.Code)" class="col-10 mb-1 small text-truncate">
             <text>@Model.LatestMessage.User.UserName: @Model.LatestMessage.Text</text>
-        }
-    </div>
+        </div>
+    }
 </div>

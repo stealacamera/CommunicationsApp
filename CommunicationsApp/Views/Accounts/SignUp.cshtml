@@ -1,0 +1,64 @@
+﻿@model CommunicationsApp.Web.Models.SignUpDTO
+
+@if (ViewData["ExternalError"] != null)
+{
+    <div class="alert alert-warning" role="alert">
+        @ViewData["ExternalError"]
+    </div>
+}
+
+<div class="d-flex gap-5">
+    <div>
+        <h3>Sign up</h3>
+        <form asp-action="SignUp">
+            <div class="form-group mb-3">
+                <label asp-for="Username"></label>
+                <input asp-for="Username" placeholder="Username" class="form-control" />
+                <span asp-validation-for="Username" class="text-danger"></span>
+            </div>
+            <div class="form-group mb-3">
+                <label asp-for="Email"></label>
+                <input asp-for="Email" type="email" class="form-control" aria-describedby="emailHelp" placeholder="user@email.com">
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div class="form-group mb-3">
+                <label asp-for="Password"></label>
+                <input asp-for="Password" type="password" class="form-control" placeholder="Password">
+                <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+            <div class="form-group">
+                <input type="submit" value="Sign up" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+
+    <div>
+        @if (Model.AuthSchemes.Any())
+        {
+            <h3>Or sign up with: </h3>
+            <form asp-controller="Account" asp-action="ExternalSignUp">
+                <div>
+                    @foreach (var scheme in Model.AuthSchemes)
+                    {
+                        <button type="submit" class="btn btn-primary" name="provider" value="@scheme.Name">
+                            @scheme.DisplayName
+                        </button>
+                    }
+                </div>
+            </form>
+        }
+    </div>
+</div>
+
+
+
+@*<div class="g-signin2" data-onsuccess="onSignIn"></div>*@
+
+@*@section Styles {
+    <meta name="google-signin-client_id" content="157952481683-c9hmd9n2jr588j2coeeuiah24pvab705.apps.googleusercontent.com">
+}
+
+@section Scripts {
+    <script src="https://apis.google.com/js/platform.js" async defer></script>
+}*@

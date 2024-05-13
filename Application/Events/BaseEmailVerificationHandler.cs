@@ -1,5 +1,6 @@
 ﻿using CommunicationsApp.Domain.Abstractions;
 using CommunicationsApp.Domain.Entities;
+using System.Text;
 
 namespace CommunicationsApp.Application.Events;
 
@@ -39,6 +40,12 @@ public abstract class BaseEmailVerificationHandler
     private async Task SendConfirmationEmailAsync(User user, string emailConfirmationBaseUrl)
     {
         string token = await _workUnit.UsersRepository.GetEmailConfirmationTokenAsync(user);
-        await _emailService.SendEmailConfirmationEmailAsync(emailConfirmationBaseUrl, user.Id, user.Email, token);
+        var tokenBytes = Encoding.UTF8.GetBytes(token);
+
+        await _emailService.SendEmailConfirmationEmailAsync(
+            emailConfirmationBaseUrl, 
+            user.Id, 
+            user.Email, 
+            Convert.ToBase64String(tokenBytes));
     }
 }

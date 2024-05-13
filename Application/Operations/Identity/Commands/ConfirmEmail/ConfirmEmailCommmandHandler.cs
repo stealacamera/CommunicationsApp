@@ -1,6 +1,7 @@
 ﻿using CommunicationsApp.Application.Common;
 using CommunicationsApp.Domain.Abstractions;
 using MediatR;
+using System.Text;
 
 namespace CommunicationsApp.Application.Operations.Identity.Commands.ConfirmEmail;
 
@@ -13,11 +14,16 @@ public sealed class ConfirmEmailCommmandHandler : BaseCommandHandler, IRequestHa
     public async Task<bool> Handle(ConfirmEmailCommmand request, CancellationToken cancellationToken)
     {
         var user = await _workUnit.UsersRepository
-                                  .GetByIdAsync(request.UserId);
+                                  .GetByIdAsync(request.UserId, excludeNonConfirmedEmail: false);
 
-        return user == null
-               ? false
-               : await _workUnit.UsersRepository
-                                .IsEmailConfirmationTokenValidAsync(user, request.EmailConfirmationToken);
+        if (user != null)
+        {
+            var decodedToken = Convert.FromBase64String(request.EmailConfirmationToken);
+
+            return await _workUnit.UsersRepository
+                                  .ConfirmEmailTokenAsync(user, Encoding.UTF8.GetString(decodedToken));
+        }
+
+        return false;
     }
 }

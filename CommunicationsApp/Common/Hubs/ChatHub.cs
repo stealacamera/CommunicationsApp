@@ -2,15 +2,18 @@
 using CommunicationsApp.Application.Operations.ChannelMembers.Queries.GetAllMembershipsForUser;
 using CommunicationsApp.Application.Operations.ChannelMembers.Queries.IsUserMemberOfChannel;
 using CommunicationsApp.Application.Operations.Channels.Queries.GetChannelByCode;
+using CommunicationsApp.Application.Operations.Messages.Queries.GetLatestMessageForChannel;
 using MediatR;
 using Microsoft.AspNetCore.SignalR;
 
-namespace CommunicationsApp.Web.Hubs;
+namespace CommunicationsApp.Web.Common.Hubs;
 
 public sealed class ChatHub : Hub
 {
-    private readonly string _receiveMessageMethod = "ReceiveMessage";
-    private readonly string _deleteMessageMethod = "DeleteMessage";
+    private readonly string _receiveMessageMethod = "ReceiveMessage",
+                            _deleteMessageMethod = "DeleteMessage",
+                            _joinChannelMethod = "JoinChannel";
+
     private readonly ISender _sender;
 
     public ChatHub(ISender sender)
@@ -55,7 +58,7 @@ public sealed class ChatHub : Hub
 
     public async Task DeleteMessageFromChannel(int messageId, string channelCode)
     {
-        await Clients.Group(channelCode).SendAsync(_deleteMessageMethod, messageId);
+        await Clients.Group(channelCode).SendAsync(_deleteMessageMethod, messageId, channelCode);
     }
 
     public async Task JoinChannel(string channelcode)
@@ -76,6 +79,14 @@ public sealed class ChatHub : Hub
         if (!isUserMember)
             return;
 
+        GetLatestChannelForMessageQuery messageQuery = new(channelResult.Value.Id);
+        var messageResult = await _sender.Send(messageQuery);
+
         await Groups.AddToGroupAsync(Context.ConnectionId, channelcode);
+
+        await Clients.Group(channelcode)
+                     .SendAsync(
+                        _joinChannelMethod,
+                        new Channel_BriefOverview(channelResult.Value, messageResult.Value));
     }
 }

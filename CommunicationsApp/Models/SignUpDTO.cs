@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System.ComponentModel.DataAnnotations;
 
 namespace CommunicationsApp.Web.Models;
@@ -13,6 +14,9 @@ public record SignUpDTO
     public string Email { get; set; } = null!;
 
     [Required]
-    [PasswordPropertyText]
+    [DataType(DataType.Password)]
     public string Password { get; set; } = null!;
+
+    [ValidateNever]
+    public IEnumerable<AuthenticationScheme> AuthSchemes { get; set; }
 }

@@ -5,6 +5,7 @@
 }
 
 <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createChannelModal">Create a new channel</button>
+<button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#joinChannelModal">Join a channel</button>
 
 <div class="modal fade" id="createChannelModal" tabindex="-1" aria-labelledby="createChannelModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -27,6 +28,26 @@
                     </div>
 
                     <input type="submit" class="btn btn-primary" value="Create" />
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="joinChannelModal" tabindex="-1" aria-labelledby="joinChannelModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5">Join an existing channel</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="joinChannelForm" asp-controller="Channels" asp-action="JoinByCode">
+                    <div class="form-group">
+                        <input required name="code" type="text" class="form-control" placeholder="Enter channel code here">
+                    </div>
+
+                    <input type="submit" class="btn btn-primary" value="Join" />
                 </form>
             </div>
         </div>
@@ -66,5 +87,6 @@
 
     <script src="/js/memberSearchAjax.js"></script>
     <script src="/js/createChannelAjax.js"></script>
+    <script src="/js/joinChannelAjax.js"></script>
     <script src="/js/showChannelAjax.js"></script>
 }

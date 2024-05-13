@@ -4,10 +4,12 @@
     <TargetFramework>net6.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>08c4e341-cc08-4351-82f8-c1bbc70b1fac</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="MediatR" Version="12.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="6.0.29" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="6.0.29" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.18">
       <PrivateAssets>all</PrivateAssets>

@@ -1,12 +1,16 @@
-﻿using CommunicationsApp.Application.DTOs;
-using CommunicationsApp.Application.Operations.Users.Queries.QueryByEmail;
+﻿using CommunicationsApp.Application.Operations.Users.Queries.QueryByEmail;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CommunicationsApp.Web.Controllers;
 
-//[Authorize]
+[Authorize]
 public class UsersController : BaseController
 {
+    public UsersController(IConfiguration configuration) : base(configuration)
+    {
+    }
+
     #region API
     [HttpPost("users/query")]
     public async Task<IActionResult> Query([FromQuery] string query, bool excludeRequester = true)

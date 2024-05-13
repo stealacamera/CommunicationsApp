@@ -1,4 +1,5 @@
 ﻿using CommunicationsApp.Application.DTOs;
+using CommunicationsApp.Application.DTOs.ViewModels;
 using CommunicationsApp.Domain.Common;
 using FluentValidation;
 using MediatR;
@@ -7,8 +8,10 @@ namespace CommunicationsApp.Application.Operations.Messages.Queries.GetAllMessag
 
 public record GetAllMessagesForChannelQuery(
     int ChannelId, 
-    int RequesterId) 
-    : IRequest<Result<IList<Message>>>;
+    int RequesterId,
+    int PageSize,
+    int? Cursor = null) 
+    : IRequest<Result<CursorPaginatedList<int, Message>>>;
 
 public sealed class GetAllMessagesForChannelQueryValidator : AbstractValidator<GetAllMessagesForChannelQuery>
 {
@@ -19,6 +22,13 @@ public sealed class GetAllMessagesForChannelQueryValidator : AbstractValidator<G
             .GreaterThan(0);
 
         RuleFor(e => e.RequesterId)
+            .NotEmpty()
+            .GreaterThan(0);
+
+        RuleFor(e => e.Cursor)
+            .GreaterThanOrEqualTo(0);
+
+        RuleFor(e => e.PageSize)
             .NotEmpty()
             .GreaterThan(0);
     }

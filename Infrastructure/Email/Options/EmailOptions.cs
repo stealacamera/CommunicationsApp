@@ -1,4 +1,4 @@
-﻿namespace CommunicationsApp.Infrastructure.Email;
+﻿namespace CommunicationsApp.Infrastructure.Email.Options;
 
 public sealed record EmailOptions
 {

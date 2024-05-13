@@ -1,15 +1,26 @@
-﻿using CommunicationsApp.Application.DTOs;
+﻿using CommunicationsApp.Application.Common.Enums;
+using CommunicationsApp.Application.Common.Errors;
+using CommunicationsApp.Application.DTOs;
+using CommunicationsApp.Application.Operations.ChannelMembers.Commands.AddChannelMember;
 using CommunicationsApp.Application.Operations.Channels.Commands.CreateChannel;
+using CommunicationsApp.Application.Operations.Channels.Commands.EditChannel;
+using CommunicationsApp.Application.Operations.Channels.Queries.GetChannelByCode;
 using CommunicationsApp.Application.Operations.Channels.Queries.GetChannelById;
 using CommunicationsApp.Application.Operations.Messages.Queries.GetAllMessagesForChannel;
 using CommunicationsApp.Web.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 
 namespace CommunicationsApp.Web.Controllers;
 
-//[Authorize]
+[Authorize]
 public class ChannelsController : BaseController
 {
+    public ChannelsController(IConfiguration configuration) : base(configuration)
+    {
+    }
+
     [HttpPost("channels")]
     public async Task<IActionResult> Create([FromBody] CreateChannelDTO model)
     {
@@ -21,6 +32,20 @@ public class ChannelsController : BaseController
                : Created(nameof(Create), new Channel_BriefOverview(newChannelResult.Value, null));
     }
 
+    [HttpPatch("channels/{id:int}")]
+    public async Task<IActionResult> Edit(int id, [FromBody, Required, MaxLength(55)] string newName)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        EditChannelCommand command = new(GetCurrentUserId(), id, newName);
+        var editResult = await Sender.Send(command);
+
+        return editResult.Failed
+               ? BadRequest(editResult.Error.Description)
+               : Ok();
+    }
+
     [HttpGet("channels/{id:int}")]
     public async Task<IActionResult> Get(int id)
     {
@@ -30,7 +55,7 @@ public class ChannelsController : BaseController
         if (channelResult.Failed)
             return BadRequest(channelResult.Error.Description);
 
-        GetAllMessagesForChannelQuery command = new(id, GetCurrentUserId());
+        GetAllMessagesForChannelQuery command = new(id, GetCurrentUserId(), GetStandardPaginationSize());
         var messagesResult = await Sender.Send(command);
 
         if (messagesResult.Succeded)
@@ -42,5 +67,30 @@ public class ChannelsController : BaseController
         }
         else
             return BadRequest(messagesResult.Error.Description);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> JoinByCode(string code)
+    {
+        // Check if channel exists
+        GetChannelByCodeQuery channelQuery = new(code);
+        var channelQueryResult = await Sender.Send(channelQuery);
+
+        if (channelQueryResult.Failed)
+            return BadRequest(channelQueryResult.Error.Description);
+
+        // Add membership
+        AddChannelMemberCommand addMemberCommand = new(GetCurrentUserId(), ChannelRole.Member, channelQueryResult.Value.Id);
+        var addMemberResult = await Sender.Send(addMemberCommand);
+
+        if(addMemberResult.Failed)
+        {
+            if (addMemberResult.Error == ChannelMemberErrors.UserAlreadyMemberOfChannel)
+                return BadRequest(addMemberResult.Error.Description);
+            else
+                return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+        }
+
+        return Created(nameof(JoinByCode), addMemberResult.Value);
     }
 }
