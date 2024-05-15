@@ -5,4 +5,5 @@ public record Message(
     string Text,
     DateTime CreatedAt,
     User User,
+    IList<Media>? Media,
     DateTime? DeletedAt = null);

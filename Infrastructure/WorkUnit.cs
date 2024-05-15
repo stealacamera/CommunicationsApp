@@ -51,6 +51,16 @@ public class WorkUnit : IWorkUnit
         }
     }
 
+    private IMediaRepository _mediaRepository;
+    public IMediaRepository MediaRepository
+    {
+        get
+        {
+            _mediaRepository ??= new MediaRepository(_dbContext);
+            return _mediaRepository;
+        }
+    }
+
     private IChannelsRepository _channelsRepository;
     public IChannelsRepository ChannelsRepository
     {

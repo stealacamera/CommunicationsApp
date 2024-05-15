@@ -1,6 +1,6 @@
 ﻿const joinChannelForm = document.getElementById('joinChannelForm');
 
-connection.on('joinChannel', channel => {
+connection.on('JoinChannel', channel => {
     $.ajax({
         url: 'partialViews/channelSidebarPartial',
         type: 'POST',

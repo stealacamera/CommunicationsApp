@@ -3,6 +3,7 @@ using CommunicationsApp.Domain.Abstractions;
 using CommunicationsApp.Domain.Entities;
 using CommunicationsApp.Infrastructure.Email;
 using CommunicationsApp.Infrastructure.Email.Options;
+using CommunicationsApp.Infrastructure.Logger;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -43,16 +44,16 @@ public static class Startup
                 .AddRoles<Role>()
                 .AddEntityFrameworkStores<AppDbContext>();
 
-        services.ConfigureApplicationCookie(options =>
-        {
-            string loginPath = "/Accounts/Login",
-                   logoutPath = "/Accounts/LogOff;";
+        //services.ConfigureApplicationCookie(options =>
+        //{
+        //    string loginPath = "/Accounts/Login",
+        //           logoutPath = "/Accounts/LogOff;";
 
-            options.ForwardSignIn = loginPath;
-            options.ForwardSignOut = logoutPath;
-            options.LoginPath = loginPath;
-            options.LogoutPath = logoutPath;
-        });
+        //    options.ForwardSignIn = loginPath;
+        //    options.ForwardSignOut = logoutPath;
+        //    options.LoginPath = loginPath;
+        //    options.LogoutPath = logoutPath;
+        //});
 
         services.AddTransient<EmailConfirmationTokenProvider<User>>();
         services.AddScoped<IWorkUnit, WorkUnit>();
@@ -62,6 +63,6 @@ public static class Startup
         services.AddTransient<IEmailService, EmailService>();
 
         // Logger
-        services.AddTransient<ILogger, Logger>();
+        services.AddTransient<ILoggerService, LoggerService>();
     }
 }

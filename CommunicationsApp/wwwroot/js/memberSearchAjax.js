@@ -45,7 +45,7 @@ if (memberSearchInput && membersSearchResult) {
                     membersSearchResult.appendChild(memberDiv);
                 });
             },
-            error: () =>
+            error: () => 
                 Toastify({
                     text: "Something went wrong with your request. Please try again later",
                     duration: 3000,

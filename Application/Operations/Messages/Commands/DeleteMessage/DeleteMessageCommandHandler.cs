@@ -21,9 +21,13 @@ public sealed class DeleteMessageCommandHandler : BaseCommandHandler, IRequestHa
         else if (message.OwnerId != request.RequesterId)
             return UserErrors.Unauthorized;
 
+        // Edit message
         message.Text = "Message was deleted";
         message.DeletedAt = DateTime.Now;
         await _workUnit.SaveChangesAsync();
+
+        // Remove message media
+        await _workUnit.MediaRepository.RemoveAllForMessage(message.Id);
 
         return Result.Success();
     }

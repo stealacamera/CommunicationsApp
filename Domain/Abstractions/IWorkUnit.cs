@@ -11,6 +11,7 @@ public interface IWorkUnit
     #region Repositories
     IUsersRepository UsersRepository { get; }
     IMessagesRepository MessagesRepository { get; }
+    IMediaRepository MediaRepository { get; }
     IChannelsRepository ChannelsRepository { get; }
     IChannelMembersRepository ChannelMembersRepository { get; }
     #endregion

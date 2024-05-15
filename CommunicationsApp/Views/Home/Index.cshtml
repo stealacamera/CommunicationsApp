@@ -2,6 +2,8 @@
 
 @section Styles {
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/dropzone@@5/dist/min/dropzone.min.css" type="text/css" />
+
 }
 
 <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createChannelModal">Create a new channel</button>
@@ -82,11 +84,13 @@
 
 @section Scripts {
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script src="https://unpkg.com/dropzone@@5/dist/min/dropzone.min.js"></script>
+
     <script src="/js/signalr/dist/browser/signalr.js"></script>
     <script src="/js/chatConnectionSetup.js"></script>
 
     <script src="/js/memberSearchAjax.js"></script>
-    <script src="/js/createChannelAjax.js"></script>
     <script src="/js/joinChannelAjax.js"></script>
+    <script src="/js/createChannelAjax.js"></script>
     <script src="/js/showChannelAjax.js"></script>
 }

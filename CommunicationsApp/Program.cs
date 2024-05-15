@@ -1,5 +1,6 @@
 using CommunicationsApp.Infrastructure;
 using CommunicationsApp.Web.Common.Hubs;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,15 +27,15 @@ var app = builder.Build();
 //    app.UseHsts();
 //}
 
-app.UseExceptionHandler(new ExceptionHandlerOptions { ExceptionHandlingPath = "/Errors/Index" });
+//app.UseExceptionHandler(new ExceptionHandlerOptions { ExceptionHandlingPath = "/Errors/Index" });
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
 
-app.UseAuthorization();
 app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",

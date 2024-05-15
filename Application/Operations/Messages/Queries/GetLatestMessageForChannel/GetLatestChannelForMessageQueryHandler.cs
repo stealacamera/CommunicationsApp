@@ -30,6 +30,7 @@ internal sealed class GetLatestChannelForMessageQueryHandler
                 message.Text,
                 message.CreatedAt,
                 new User(messageSender.Id, messageSender.UserName, messageSender.Email),
+                null,
                 message.DeletedAt);
         }
 

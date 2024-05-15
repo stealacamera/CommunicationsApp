@@ -23,7 +23,7 @@ Array.from(channelsSidebar.children).forEach(channel => {
                 channel.classList.remove('list-group-item-primary');
 
                 messagesViewingDiv.innerHTML = data;
-                addMessagingFunctionality();
+                addMessagingFunctionality(dropzone);
                 addEditFunctionality();
 
                 const messages = document.getElementById('channelMessages');
@@ -85,6 +85,7 @@ connection.on('DeleteMessage', (messageId, channelCode) => {
 function addMessagingFunctionality() {
     const sendMessageForm = document.getElementById('messageSendForm');
     const messageInput = document.getElementById('messageInput'),
+        messageMediaInput = document.getElementById('messageMediaUpload'),
         submitBtn = sendMessageForm.querySelector('button[type="submit"]');
 
     const spinnerIconString = '<div class="spinner-border" role="status">' +
@@ -94,24 +95,30 @@ function addMessagingFunctionality() {
             '</svg>';
 
     sendMessageForm.addEventListener('submit', e => {
+        console.log(messageMediaInput.files);
         e.preventDefault();
         const channelCode = document.getElementById('channelCode').value;
 
-        $.ajax({
-            url: sendMessageForm.action,
-            contentType: "application/json",
-            type: 'POST',
-            data: JSON.stringify(messageInput.value),
-            beforeSend: () => submitBtn.innerHTML = spinnerIconString,
-            complete: () => submitBtn.innerHTML = sendIconString,
-            success: newMessage => {
-                // Send message to channel server
-                connection.invoke("SendMessageToChannel", newMessage, channelCode);
+        messageData = new FormData();
+        messageData.append('Message', messageInput.value);
+        messageData.append('Media', []);
 
-                messageInput.value = '';
-            },
-            error: () => errorToast.showToast()
-        });
+        //$.ajax({
+        //    url: sendMessageForm.action,
+        //    processData: false,
+        //    contentType: false,
+        //    type: 'POST',
+        //    data: messageData,
+        //    beforeSend: () => submitBtn.innerHTML = spinnerIconString,
+        //    complete: () => submitBtn.innerHTML = sendIconString,
+        //    success: newMessage => {
+        //        // Send message to channel server
+        //        connection.invoke("SendMessageToChannel", newMessage, channelCode);
+
+        //        messageInput.value = '';
+        //    },
+        //    error: () => errorToast.showToast()
+        //});
     });
 }
 

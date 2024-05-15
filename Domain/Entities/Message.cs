@@ -9,6 +9,3 @@ public class Message : BaseSoftDeleteEntity
     public string Text { get; set; } = null!;
     public DateTime CreatedAt { get; set; }
 }
-
-
-// TODO multimedia

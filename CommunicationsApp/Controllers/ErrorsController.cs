@@ -10,7 +10,7 @@ public class ErrorsController : Controller
     {
         AppError error = new(
             StatusCodes.Status500InternalServerError, 
-            "\"Something went wrong. Please try again later.\"");
+            "Something went wrong. Please try again later");
 
         Response.StatusCode = StatusCodes.Status500InternalServerError;
 

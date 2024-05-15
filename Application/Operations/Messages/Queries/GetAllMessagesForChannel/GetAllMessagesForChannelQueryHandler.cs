@@ -4,6 +4,7 @@ using CommunicationsApp.Application.DTOs;
 using CommunicationsApp.Application.DTOs.ViewModels;
 using CommunicationsApp.Domain.Abstractions;
 using CommunicationsApp.Domain.Common;
+using CommunicationsApp.Domain.Common.Enums;
 using MediatR;
 
 namespace CommunicationsApp.Application.Operations.Messages.Queries.GetAllMessagesForChannel;
@@ -26,18 +27,31 @@ public sealed class GetAllMessagesForChannelQueryHandler
 
         var paginatedMessages = await _workUnit.MessagesRepository
                                                .GetAllForChannelAsync(request.ChannelId, request.Cursor, request.PageSize);
-        
-        var messages = paginatedMessages.Values
-                                        .Select(async e =>
-                                         {
-                                             var user = await _workUnit.UsersRepository.GetByIdAsync(e.OwnerId);
-                                             User messageOwner = new User(user.Id, user.UserName, user.Email);
 
-                                             return new Message(e.Id, e.Text, e.CreatedAt, messageOwner, e.DeletedAt);
-                                         })
+        var messages = paginatedMessages.Values
+                                        .Select(ConvertEntityToModel)
                                         .Select(e => e.Result)
                                         .ToList();
 
         return new CursorPaginatedList<int, Message>(paginatedMessages.NextCursor, messages);
-}
+    }
+
+    private async Task<Message> ConvertEntityToModel(Domain.Entities.Message entity)
+    {
+        // Get owner model
+        var user = await _workUnit.UsersRepository.GetByIdAsync(entity.OwnerId);
+        User messageOwner = new User(user.Id, user.UserName, user.Email);
+
+        // Get media models
+        var media = await _workUnit.MediaRepository.GetAllForMessage(entity.Id);
+        IList<Media> mediaModels = media.Select(e => new Media(
+                                                       e.Filename,
+                                                       MediaType.FromValue(e.MediaTypeId)))
+                                        .ToList();
+
+        return new Message(
+            entity.Id, entity.Text,
+            entity.CreatedAt, messageOwner,
+            mediaModels, entity.DeletedAt);
+    }
 }

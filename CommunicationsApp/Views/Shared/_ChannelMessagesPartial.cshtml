@@ -39,7 +39,8 @@
             }
         }
     </div>
-    <form id="messageSendForm" asp-controller="Messages" asp-action="Create" asp-route-id="@Model.Channel.Id">
+    <form id="messageSendForm" asp-controller="Messages" asp-action="Create" asp-route-id="@Model.Channel.Id">        
+        <input type="file" class="form-control" id="messageMediaUpload" multiple>
         <div class="input-group mt-3 mb-3">
             <input type="hidden" id="channelCode" value="@Model.Channel.Code" />
             <input id="messageInput" type="text" class="form-control" placeholder="Write your message" />

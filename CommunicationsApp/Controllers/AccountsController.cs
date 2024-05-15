@@ -76,6 +76,8 @@ public class AccountsController : BaseController
             else
             {
                 ModelState.AddModelError(string.Empty, "Wrong email and/or password. Try again");
+                model.AuthSchemes = await Sender.Send(new GetExternalAuthSchemesQuery());
+
                 return View(model);
             }
         }

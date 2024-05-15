@@ -34,7 +34,7 @@ public sealed class GetAllChannelsForUserQueryHandler
                                        messageModel = new Message(
                                            latestMessage.Id, latestMessage.Text, 
                                            latestMessage.CreatedAt, messageUserModel, 
-                                           latestMessage.DeletedAt);
+                                           null, latestMessage.DeletedAt);
                                    }
 
                                    return new Channel_BriefOverview(new Channel_BriefDescription(e.Id, e.Name, e.Code), messageModel);
