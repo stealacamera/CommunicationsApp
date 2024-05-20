@@ -1,23 +1,22 @@
-﻿using CommunicationsApp.Infrastructure.Logger;
+﻿using Serilog;
 
 namespace CommunicationsApp.Web.Common;
 
 public sealed class ExceptionHandlingMiddleware : IMiddleware
 {
-    private readonly ILoggerService _logger;
-
-    public ExceptionHandlingMiddleware(ILoggerService logger)
-        => _logger = logger;
-
     public async Task InvokeAsync(HttpContext context, RequestDelegate next)
     {
         try
         {
             await next(context);
         }
-        catch(Exception exc)
+        catch(TaskCanceledException)
         {
-            //_logger.LogErrorAsync(exc);
+            // Do nothing
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Web app error");
             throw;
         }
     }

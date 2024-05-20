@@ -16,8 +16,7 @@ internal class MessageConfiguration : IEntityTypeConfiguration<Message>
                .IsRequired();
 
         builder.Property(e => e.Text)
-               .HasMaxLength(1000)
-               .IsRequired();
+               .HasMaxLength(1000);
 
         builder.HasOne<User>()
                .WithMany()

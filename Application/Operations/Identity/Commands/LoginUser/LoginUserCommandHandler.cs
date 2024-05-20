@@ -21,7 +21,7 @@ public sealed class LoginUserCommandHandler : BaseCommandHandler, IRequestHandle
         else if (user.EmailConfirmed == false)
             return IdentityErrors.UnverifiedEmail;
 
-        var signInResult = await _workUnit.UsersRepository.SignInUserAsync(user, request.Password, request.rememberMe);
+        var signInResult = await _workUnit.IdentityRepository.SignInUserAsync(user, request.Password, request.rememberMe);
         return signInResult.Succeeded;
     }
 }

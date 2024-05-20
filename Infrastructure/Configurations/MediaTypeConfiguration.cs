@@ -15,5 +15,12 @@ internal sealed class MediaTypeConfiguration : IEntityTypeConfiguration<MediaTyp
         builder.Property(e => e.Name)
                .IsRequired()
                .HasMaxLength(15);
+
+        // Seeding
+        var data = MediaType.List
+                            .Select(e => new { e.Value, e.Name })
+                            .ToList();
+
+        builder.HasData(data);
     }
 }

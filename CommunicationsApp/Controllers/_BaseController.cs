@@ -29,7 +29,7 @@ public abstract class BaseController : Controller
 
     protected int GetCurrentUserId()
     {
-        return User.Identity.IsAuthenticated
+        return User.Identity!.IsAuthenticated
                ? int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!)
                : 0;
     }

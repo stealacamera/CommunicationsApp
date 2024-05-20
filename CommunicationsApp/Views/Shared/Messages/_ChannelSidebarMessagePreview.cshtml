@@ -1,0 +1,32 @@
+﻿@using CommunicationsApp.Domain.Common.Enums;
+@model CommunicationsApp.Application.DTOs.Message
+
+<div id="sidebarMessage@(Model.Id)" class="col-10 mb-1 small">
+    <text>
+        @Model.User.UserName:
+
+        @if (Model.DeletedAt == null && Model.Text == null)
+        {
+            <span class="fst-italic text-truncate">
+                @if(Model.Media![0].Type == MediaType.Image)
+                {
+                    <i class="fa-solid fa-camera"></i>
+                    <text>Photo</text>
+                } else if(Model.Media[0].Type == MediaType.Video)
+                {
+                    <i class="fa-solid fa-video"></i>
+                    <text>Video</text>
+                } else
+                {
+                    <text>@Model.Media[0].Filename</text>
+                }
+            </span>
+        }
+        else
+        {
+            <text>@Model.Text</text>
+        }
+
+        @Model.CreatedAt
+    </text>
+</div>

@@ -24,11 +24,8 @@ namespace CommunicationsApp.Infrastructure.Migrations
 
             modelBuilder.Entity("CommunicationsApp.Domain.Common.Enums.MediaType", b =>
                 {
-                    b.Property<int>("Value")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Value"));
+                    b.Property<byte>("Value")
+                        .HasColumnType("tinyint");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -38,6 +35,23 @@ namespace CommunicationsApp.Infrastructure.Migrations
                     b.HasKey("Value");
 
                     b.ToTable("MediaTypes", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Value = (byte)2,
+                            Name = "Document"
+                        },
+                        new
+                        {
+                            Value = (byte)1,
+                            Name = "Image"
+                        },
+                        new
+                        {
+                            Value = (byte)3,
+                            Name = "Video"
+                        });
                 });
 
             modelBuilder.Entity("CommunicationsApp.Domain.Entities.Channel", b =>
@@ -134,8 +148,8 @@ namespace CommunicationsApp.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("MediaTypeId")
-                        .HasColumnType("int");
+                    b.Property<byte>("MediaTypeId")
+                        .HasColumnType("tinyint");
 
                     b.Property<int>("MessageId")
                         .HasColumnType("int");
@@ -170,7 +184,6 @@ namespace CommunicationsApp.Infrastructure.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Text")
-                        .IsRequired()
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 

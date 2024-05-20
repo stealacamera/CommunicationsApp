@@ -4,7 +4,7 @@ public class Result
 {
     public bool Succeded => Error == null;
     public bool Failed => !Succeded;
-    public Error? Error { get; } = null;
+    public Error Error { get; } = null;
 
     public static Result Success() => new Result();
     public static Result Fail(Error error) => new Result(error);
@@ -19,7 +19,7 @@ public class Result
 
 public class Result<T> : Result
 {
-    public T? Value { get; }
+    public T Value { get; } = default;
 
     public static Result Success(T value) => new Result<T>(value);
 

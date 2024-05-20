@@ -17,9 +17,9 @@ internal abstract class BaseRepository<TEntity>
         _untrackedSet = _set.AsNoTracking();
     }
 
-    public virtual async Task<TEntity> AddAsync(TEntity entity)
+    public virtual async Task<TEntity> AddAsync(TEntity entity, CancellationToken cancellationToken)
     {
-        await _set.AddAsync(entity);
+        await _set.AddAsync(entity, cancellationToken);
         return entity;
     }
 }
@@ -32,12 +32,12 @@ internal abstract class BaseStrongEntityRepository<TEntity, TKey>
     {
     }
 
-    public virtual async Task<bool> DoesInstanceExistAsync(TKey id)
-        => await GetByIdAsync(id) != null;
+    public virtual async Task<bool> DoesInstanceExistAsync(TKey id, CancellationToken cancellationToken)
+        => await GetByIdAsync(id, cancellationToken) != null;
 
-    public virtual async Task<TEntity?> GetByIdAsync(TKey id)
+    public virtual async Task<TEntity?> GetByIdAsync(TKey id, CancellationToken cancellationToken)
     {
-        return await _set.FindAsync(id);
+        return await _set.FindAsync(id, cancellationToken);
     }
 }
 
@@ -49,9 +49,9 @@ internal class BaseSoftDeleteRepository<TEntity, TKey>
     {
     }
 
-    public override async Task<TEntity?> GetByIdAsync(TKey id)
+    public override async Task<TEntity?> GetByIdAsync(TKey id, CancellationToken cancellationToken)
     {
-        var entity = await base.GetByIdAsync(id);
+        var entity = await base.GetByIdAsync(id, cancellationToken);
 
         if (entity != null && entity.DeletedAt == null)
             return entity;

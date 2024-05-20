@@ -28,6 +28,22 @@ public class EmailService : IEmailService, IEmailSender
             "Please confirm your account by clicking <a href=\"" + confirmationLink + "\">here</a>");
     }
 
+    public async Task SendMemberRemovalEmailAsync(string userEmail, string channelName)
+    {
+        await SendEmailAsync(
+            userEmail,
+            "Removed from channel",
+            $"You were removed from the \"{channelName}\" channel by the admin");
+    }
+
+    public async Task SendMemberAddedEmailAsync(string userEmail, string channelName)
+    {
+        await SendEmailAsync(
+            userEmail,
+            "Added to new channel",
+            $"You were added to the \"{channelName}\" channel. Go to your homepage to join in the conversation!");
+    }
+
     public Task SendEmailAsync(string email, string subject, string htmlMessage)
     {
         var emailMessage = new MimeMessage();

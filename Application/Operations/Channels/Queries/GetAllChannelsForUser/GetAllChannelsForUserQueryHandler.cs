@@ -3,8 +3,8 @@ using CommunicationsApp.Application.Common.Errors;
 using CommunicationsApp.Application.DTOs;
 using CommunicationsApp.Domain.Abstractions;
 using CommunicationsApp.Domain.Common;
+using CommunicationsApp.Domain.Common.Enums;
 using MediatR;
-using System.Runtime.InteropServices;
 
 namespace CommunicationsApp.Application.Operations.Channels.Queries.GetAllChannelsForUser;
 
@@ -21,25 +21,44 @@ public sealed class GetAllChannelsForUserQueryHandler
             return UserErrors.NotFound;
 
         return (await _workUnit.ChannelsRepository
-                               .GetAllForUserAsync(request.UserId))
-                               .Select(async e => {
-                                   var latestMessage = await _workUnit.MessagesRepository.GetLatestForChannelAsync(e.Id);
-                                   Message messageModel = null;
-
-                                   if(latestMessage != null)
-                                   {
-                                       var messageUser = await _workUnit.UsersRepository.GetByIdAsync(latestMessage.OwnerId);
-                                       var messageUserModel = new User(messageUser.Id, messageUser.UserName, messageUser.Email);
-
-                                       messageModel = new Message(
-                                           latestMessage.Id, latestMessage.Text, 
-                                           latestMessage.CreatedAt, messageUserModel, 
-                                           null, latestMessage.DeletedAt);
-                                   }
-
-                                   return new Channel_BriefOverview(new Channel_BriefDescription(e.Id, e.Name, e.Code), messageModel);
-                               })
+                               .GetAllForUserAsync(request.UserId, cancellationToken))
+                               .Select(e => CreateModel(e, cancellationToken))
                                .Select(e => e.Result)
                                .ToList();
+    }
+
+    private async Task<Channel_BriefOverview> CreateModel(Domain.Entities.Channel entity, CancellationToken cancellationToken)
+    {
+        var latestMessage = await _workUnit.MessagesRepository.GetLatestForChannelAsync(entity.Id, cancellationToken);
+        Message messageModel = null;
+
+        if (latestMessage != null)
+        {
+            var messageUser = await _workUnit.UsersRepository.GetByIdAsync(latestMessage.OwnerId);
+            var messageUserModel = new User(messageUser.Id, messageUser.UserName, messageUser.Email);
+
+            IList<Media> mediaModels = null;
+
+            if (latestMessage.DeletedAt == null)
+            {
+                var messageMedia = await _workUnit.MediaRepository.GetAllForMessage(latestMessage.Id, cancellationToken);
+                mediaModels = messageMedia.Select(e => new Media(
+                                                     e.Filename,
+                                                     MediaType.FromValue(e.MediaTypeId)))
+                                          .ToList();
+            }
+
+            messageModel = new Message(
+                latestMessage.Id,
+                latestMessage.Text,
+                latestMessage.CreatedAt,
+                messageUserModel,
+                mediaModels,
+                latestMessage.DeletedAt);
+        }
+
+        return new Channel_BriefOverview(
+            new Channel_BriefDescription(entity.Id, entity.Name, entity.Code), 
+            messageModel);
     }
 }

@@ -14,7 +14,10 @@ internal class QueryByEmailAndUsernameQueryHandler : BaseCommandHandler, IReques
     public async Task<IList<User>> Handle(QueryByEmailAndUsernameQuery request, CancellationToken cancellationToken)
     {
         var queryResult = await _workUnit.UsersRepository
-                                         .QueryByEmailAndUsernameAsync(request.Query, request.excludeRequesterId);
+                                         .QueryByEmailAndUsernameAsync(
+                                            request.Query, 
+                                            cancellationToken, 
+                                            request.excludeRequesterId);
 
         return queryResult.Select(e => new User(e.Id, e.UserName, e.Email))
                           .ToList();

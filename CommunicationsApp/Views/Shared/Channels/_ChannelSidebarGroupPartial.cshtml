@@ -7,8 +7,6 @@
 
     @if (Model.LatestMessage != null)
     {
-        <div id="latestMessage@(Model.LatestMessage.Id)" data-latest-message-for="@(Model.Channel.Code)" class="col-10 mb-1 small text-truncate">
-            <text>@Model.LatestMessage.User.UserName: @Model.LatestMessage.Text</text>
-        </div>
+        <partial name="/Views/Shared/Messages/_ChannelSidebarMessagePreview.cshtml" model="Model.LatestMessage" />
     }
 </div>

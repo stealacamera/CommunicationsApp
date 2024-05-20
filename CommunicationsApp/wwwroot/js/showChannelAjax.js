@@ -22,9 +22,14 @@ Array.from(channelsSidebar.children).forEach(channel => {
             success: data => {
                 channel.classList.remove('list-group-item-primary');
 
+                // Add base functionalities for channel
                 messagesViewingDiv.innerHTML = data;
-                addMessagingFunctionality(dropzone);
-                addEditFunctionality();
+                addMessagingFunctionality();
+                addEditChannelFunctionality();
+
+                // Add member-related functionalities
+                addDeleteMemberFunctionality(channel.dataset.SidebarChannelCode);
+                addAddNewMembersFunctionality();
 
                 const messages = document.getElementById('channelMessages');
                 messages.scrollTop = messages.scrollHeight;
@@ -46,41 +51,58 @@ Array.from(channelsSidebar.children).forEach(channel => {
     });
 })
 
-// Set up receiving / sending messages
-connection.on('ReceiveMessage', (message, channelCode) => {
-    const channelMessagesDiv = document.getElementById('channelMessages');
-    const currOpenChannel = document.getElementsByClassName('chat-container')[0];
+function addAddNewMembersFunctionality() {
+    const newMemberSeachInput = document.getElementById('newMemberSearchInput'),
+        newMembersSearchResult = document.getElementById('newMembersSearchResult');
 
-    // If the given chat is open, show message
-    // Otherwise, highlight channel in the sidebar if there
-    if (!currOpenChannel || currOpenChannel.dataset.openChatCode != channelCode) {
-        if (sidebarChannel)
-            sidebarChannel.classList.add('list-group-item-primary');
-    }
-    else
-        appendMessagePartial(message, channelMessagesDiv);
+    addUserQueryFunctionality(newMemberSeachInput, newMembersSearchResult);
 
-    // Update sidebar with latest message
-    updateSidebarChannelPreviewMessage(channelCode, message.id, message.user.userName, message.Text);
-});
+    const newMembersForm = document.getElementById('addNewMembersForm');
 
-connection.on('DeleteMessage', (messageId, channelCode) => {
-    // Delete message if chat is open
-    const messageContainer = document.getElementById(`openMessage${messageId}`);
+    newMembersForm.addEventListener('submit', e => {
+        e.preventDefault();
 
-    if (messageContainer) {
-        const textContainer = document.getElementById(`openMessageText${messageId}`);
-        textContainer.innerHTML = '<span class="fst-italic">Message was deleted</span>';
+        const data = Array.from(newMembersForm.querySelectorAll('input[name=memberIds]:checked'))
+                          .map(checkbox => parseInt(checkbox.value));
 
-        const optionsList = messageContainer.querySelector('[data-options-list]');
+        $.ajax({
+            url: newMembersForm.action,
+            contentType: "application/json",
+            type: 'POST',
+            data: JSON.stringify(data),
+            success: newMembersData => connection.invoke('AddMembersToChannel', newMembersData),
+            error: xhr =>
+                Toastify({
+                    text: xhr.responseText,
+                    duration: 3000,
+                    close: true,
+                    gravity: "bottom",
+                    position: "right",
+                }).showToast()
+        });
+    })
+}
 
-        if (optionsList)
-            optionsList.remove();
-    }
+function addDeleteMemberFunctionality(channelCode) {
+    var deleteMemberForms = document.getElementsByClassName('deleteChannelMemberForm');
 
-    // Delete message in preview
-    updateSidebarChannelPreviewMessage(channelCode, messageId, None, None);
-})
+    Array.from(deleteMemberForms).forEach(form =>
+        form.addEventListener('submit', e => deleteMember(e, form.action, channelCode)));
+}
+
+function deleteMember(event, formAction, channelCode) {
+    event.preventDefault();
+
+    if (!confirm("Are you sure you want to remove this member?"))
+        return;
+
+    $.ajax({
+        url: formAction,
+        type: 'DELETE',
+        success: removedMemberIds => connection.invoke('RemoveMembersFromChannel', channelCode, removedMemberIds),
+        error: () => errorToast.showToast()
+    })
+}
 
 function addMessagingFunctionality() {
     const sendMessageForm = document.getElementById('messageSendForm');
@@ -88,37 +110,54 @@ function addMessagingFunctionality() {
         messageMediaInput = document.getElementById('messageMediaUpload'),
         submitBtn = sendMessageForm.querySelector('button[type="submit"]');
 
-    const spinnerIconString = '<div class="spinner-border" role="status">' +
-        '<span class="visually-hidden">Loading...</span></div>',
-        sendIconString = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-send" viewBox="0 0 16 16">' +
-            '< path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576zm6.787-8.201L1.591 6.602l4.339 2.76z" />' +
-            '</svg>';
+    const spinnerIconString = '<i class="fa-solid fa-spinner"><span class="visually-hidden">Loading...</span></i>';
+          sendIconString = '<i class="fa-regular fa-paper-plane"></i>';
 
     sendMessageForm.addEventListener('submit', e => {
-        console.log(messageMediaInput.files);
         e.preventDefault();
         const channelCode = document.getElementById('channelCode').value;
 
         messageData = new FormData();
-        messageData.append('Message', messageInput.value);
-        messageData.append('Media', []);
+        messageData.append('Text', messageInput.value);
 
-        //$.ajax({
-        //    url: sendMessageForm.action,
-        //    processData: false,
-        //    contentType: false,
-        //    type: 'POST',
-        //    data: messageData,
-        //    beforeSend: () => submitBtn.innerHTML = spinnerIconString,
-        //    complete: () => submitBtn.innerHTML = sendIconString,
-        //    success: newMessage => {
-        //        // Send message to channel server
-        //        connection.invoke("SendMessageToChannel", newMessage, channelCode);
+        for (var i = 0; i < messageMediaInput.files.length; i++)
+            messageData.append("Media", messageMediaInput.files[i]);
 
-        //        messageInput.value = '';
-        //    },
-        //    error: () => errorToast.showToast()
-        //});
+        $.ajax({
+            url: sendMessageForm.action,
+            processData: false,
+            contentType: false,
+            type: 'POST',
+            data: messageData,
+            beforeSend: () => submitBtn.innerHTML = spinnerIconString,
+            complete: () => submitBtn.innerHTML = sendIconString,
+            success: newMessage => {
+                // Send message to channel server
+                connection.invoke("SendMessageToChannel", newMessage, channelCode);
+
+                // Clear form
+                messageInput.value = '';
+                messageMediaInput.value = null;
+            },
+            error: xhr => {
+                if (xhr.status == 400) {
+                    const errors = JSON.parse(xhr.responseText);
+
+                    for (const propertyErrors in errors) 
+                        errors[propertyErrors].forEach(error =>
+                            Toastify({
+                                text: error,
+                                duration: 6000,
+                                close: true,
+                                gravity: "bottom",
+                                position: "right",
+                            }).showToast()
+                        );
+                }
+                else
+                    errorToast.showToast();
+            }
+        });
     });
 }
 
@@ -132,12 +171,14 @@ function appendMessagePartial(messageData, chatBoxContainer, appendToEnd = true,
         success: messagePartial => {
             chatBoxContainer.insertAdjacentHTML(appendToEnd ? 'beforeend' : 'afterbegin', messagePartial);
             addDeleteFunctionality(document.getElementById(`openMessage${messageData.id}`));
+
+            chatBoxContainer.scrollTop = chatBoxContainer.scrollHeight;
         },
         error: () => errorToast.showToast()
     });
 }
 
-function addEditFunctionality() {
+function addEditChannelFunctionality() {
     const channelName = document.getElementById('channelName');
     const editChannelNameBtn = document.getElementById('editChannelNameBtn');
 
@@ -217,11 +258,12 @@ function addDeleteFunctionality(messageDivElement) {
         $.ajax({
             url: deleteForm.action,
             type: 'DELETE',
-            success: () => connection.invoke('DeleteMessageFromChannel', parseInt(messageDivElement.dataset.id), currOpenChat.dataset.openChatCode),
+            success: () => connection.invoke('DeleteMessageFromChannel', deleteForm.dataset.deleteFormId, currOpenChat.dataset.openChatCode),
             error: () => errorToast.showToast()
         });
     })
 }
+
 
 function updateSidebarChannelName(channelCode, newName) {
     const sidebarChannel = document.querySelector(`[data-sidebar-channel-code='${channelCode}']`);
@@ -230,20 +272,24 @@ function updateSidebarChannelName(channelCode, newName) {
         document.getElementById(`sidebarChannelName${channelCode}`).textContent = newName;
 }
 
-function updateSidebarChannelPreviewMessage(channelCode, messageId, messageSenderUserName, messageText) {
+function updateSidebarChannelPreviewMessage(channelCode, message, isMessageDeleted = false) {
+    // If updating for deleted message,
+    // check if current preview'd message is the deleted one
+    if (isMessageDeleted && !document.getElementById(`sidebarMessage${message.id}`))
+        return;
+
     const sidebarChannel = document.querySelector(`[data-sidebar-channel-code='${channelCode}']`);
 
     if (sidebarChannel) {
-        const latestMessageContainer = sidebarChannel.querySelector('[data-latest-message-for]');
+        if (sidebarChannel.childElementCount > 1)
+            sidebarChannel.removeChild(sidebarChannel.children[1]);
 
-        // If message is deleted, showcase
-        // Otherwise, update text
-        if (messageSenderUserName == None) {
-            if (latestMessageContainer.id == `latestMessage${messageId}`)
-                latestMessageContainer.textContent = `${latestMessageContainer.textContent.split(':')[0]}: Message was deleted`
-        } else {
-            latestMessageContainer.id = latestMessageContainer.replace(/[0-9]/g, '') + messageId;
-            latestMessageContainer.textContent = `${messageSenderUserName}: ${messageText}`;
-        }
+        $.ajax({
+            url: 'partialView/messagePreview',
+            contentType: 'application/json',
+            type: 'POST',
+            data: JSON.stringify(message),
+            success: messagePreviewView => sidebarChannel.insertAdjacentHTML('beforeend', messagePreviewView)
+        });
     }
 }

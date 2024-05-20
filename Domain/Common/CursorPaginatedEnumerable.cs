@@ -20,6 +20,7 @@ public class CursorPaginatedEnumerable<TKey, TEntity>
         int pageSize,
         string sortingPropertyName,
         IQueryable<TEntity> query,
+        CancellationToken cancellationToken,
         bool getOlderValues = true)
     {
         if (cursor.HasValue)
@@ -28,7 +29,7 @@ public class CursorPaginatedEnumerable<TKey, TEntity>
                                      : EF.Property<TKey>(e, sortingPropertyName).CompareTo(cursor.Value) <= 0);
 
         query = query.Take(pageSize + 1);
-        var values = await query.ToListAsync();
+        var values = await query.ToListAsync(cancellationToken);
         TKey newCursor = default;
 
         if(values.Skip(1).Any() && values.Count >= pageSize)

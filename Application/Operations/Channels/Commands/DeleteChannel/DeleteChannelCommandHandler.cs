@@ -15,13 +15,14 @@ public sealed class DeleteChannelCommandHandler : BaseCommandHandler, IRequestHa
 
     public async Task<Result> Handle(DeleteChannelCommand request, CancellationToken cancellationToken)
     {
-        var channel = await _workUnit.ChannelsRepository.GetByIdAsync(request.ChannelId);
+        var channel = await _workUnit.ChannelsRepository
+                                     .GetByIdAsync(request.ChannelId, cancellationToken);
 
         if (channel == null)
             return ChannelErrors.NotFound;
 
         var membership = await _workUnit.ChannelMembersRepository
-                                        .GetByIdsAsync(request.RequesterId, channel.Id);
+                                        .GetByIdsAsync(request.RequesterId, channel.Id, cancellationToken);
 
         if (membership == null || membership.RoleId != ChannelRole.Owner)
             return UserErrors.Unauthorized;

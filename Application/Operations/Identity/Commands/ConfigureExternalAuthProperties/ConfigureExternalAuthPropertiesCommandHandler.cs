@@ -13,5 +13,5 @@ internal sealed class ConfigureExternalAuthPropertiesCommandHandler
     }
 
     public Task<AuthenticationProperties> Handle(ConfigureExternalAuthPropertiesCommand request, CancellationToken cancellationToken)
-        => Task.Run(() => _workUnit.UsersRepository.ConfigureExternalAuthProperties(request.Provider, request.RedirectUrl));
+        => Task.Run(() => _workUnit.IdentityRepository.ConfigureExternalAuthProperties(request.Provider, request.RedirectUrl));
 }

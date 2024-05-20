@@ -1,33 +1,29 @@
-﻿const memberSearchInput = document.getElementById('memberSearchInput');
-const membersSearchResult = document.getElementById('membersSearchResult');
-
-if (memberSearchInput && membersSearchResult) {
-    memberSearchInput.addEventListener('keyup', e => {
+﻿function addUserQueryFunctionality(userSearchInput, usersQueryResultDiv) {
+    userSearchInput.addEventListener('keyup', e => {
         const isKeyAlphanumeric = e.keyCode >= 48 && e.keyCode <= 90;
 
         if (!isKeyAlphanumeric && e.keyCode != 8)
             return;
 
-        for (let i = membersSearchResult.children.length - 1; i >= 0; i--) {
-            const memberDiv = membersSearchResult.children[i];
+        for (let i = usersQueryResultDiv.children.length - 1; i >= 0; i--) {
+            const memberDiv = usersQueryResultDiv.children[i];
 
             if (!memberDiv.querySelector('input[name=memberIds]:checked'))
-                membersSearchResult.removeChild(memberDiv);
+                usersQueryResultDiv.removeChild(memberDiv);
         }
 
-        if (!memberSearchInput.value)
+        if (!userSearchInput.value)
             return;
 
         $.ajax({
-            url: `users/query?query=${memberSearchInput.value}`,
+            url: `users/query?query=${userSearchInput.value}`,
             type: 'POST',
             success: data => {
-
                 data.forEach(member => {
                     const memberCheckbox = document.createElement('input');
                     memberCheckbox.id = `member-${member.id}`;
 
-                    if (membersSearchResult.querySelector(`#${memberCheckbox.id}`))
+                    if (usersQueryResultDiv.querySelector(`#${memberCheckbox.id}`))
                         return;
 
                     memberCheckbox.type = 'checkbox';
@@ -42,7 +38,7 @@ if (memberSearchInput && membersSearchResult) {
                     memberDiv.appendChild(memberCheckbox);
                     memberDiv.appendChild(label);
 
-                    membersSearchResult.appendChild(memberDiv);
+                    usersQueryResultDiv.appendChild(memberDiv);
                 });
             },
             error: () => 

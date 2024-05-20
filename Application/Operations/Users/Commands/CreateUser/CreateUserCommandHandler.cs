@@ -28,7 +28,7 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Resul
         var createUserResult = await _workUnit.UsersRepository.AddAsync(user, request.Password);
 
         if (!createUserResult.Succeeded)
-            return new Error(createUserResult.Errors.First().Description);
+            return new Error(createUserResult.Errors.First().Description, ErrorType.General);
 
         await _workUnit.SaveChangesAsync();
 

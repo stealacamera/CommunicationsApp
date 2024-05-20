@@ -11,12 +11,17 @@ namespace CommunicationsApp.Web.Common.Hubs;
 public sealed class ChatHub : Hub
 {
     private readonly string _receiveMessageMethod = "ReceiveMessage",
-                            _deleteMessageMethod = "DeleteMessage",
-                            _joinChannelMethod = "JoinChannel";
+                            _deleteMessageMethod = "DeleteMessage";
+    
+    private readonly string _joinChannelMethod = "JoinChannel",
+                            _leaveChannelMethod = "LeaveChannel";
+    
+    private readonly string _addedToChannelMethod = "AddedToChannel",
+                            _removedFromChannelMethod = "RemovedFromChannel";
 
     private readonly ISender _sender;
 
-    public ChatHub(ISender sender)
+    public ChatHub(ISender sender) : base()
         => _sender = sender;
 
     public override async Task OnConnectedAsync()
@@ -56,18 +61,18 @@ public sealed class ChatHub : Hub
         await Clients.Group(channelCode).SendAsync(_receiveMessageMethod, message, channelCode);
     }
 
-    public async Task DeleteMessageFromChannel(int messageId, string channelCode)
+    public async Task DeleteMessageFromChannel(string channelCode, int deletedMessageId)
     {
-        await Clients.Group(channelCode).SendAsync(_deleteMessageMethod, messageId, channelCode);
+        await Clients.Group(channelCode).SendAsync(_deleteMessageMethod, deletedMessageId, channelCode);
     }
 
-    public async Task JoinChannel(string channelcode)
+    public async Task JoinChannel(string channelCode)
     {
         // Check if user is member of channel
         if (Context.UserIdentifier == null)
             throw new UnauthorizedAccessException();
 
-        GetChannelByCodeQuery channelQuery = new(channelcode);
+        GetChannelByCodeQuery channelQuery = new(channelCode);
         var channelResult = await _sender.Send(channelQuery);
 
         if (channelResult.Failed)
@@ -82,11 +87,55 @@ public sealed class ChatHub : Hub
         GetLatestChannelForMessageQuery messageQuery = new(channelResult.Value.Id);
         var messageResult = await _sender.Send(messageQuery);
 
-        await Groups.AddToGroupAsync(Context.ConnectionId, channelcode);
+        await Groups.AddToGroupAsync(Context.ConnectionId, channelCode);
 
-        await Clients.Group(channelcode)
+        await Clients.Group(channelCode)
                      .SendAsync(
                         _joinChannelMethod,
                         new Channel_BriefOverview(channelResult.Value, messageResult.Value));
+    }
+
+    public async Task LeaveChannel(string channelCode)
+    {
+        GetChannelByCodeQuery channelQuery = new(channelCode);
+        var channelResult = await _sender.Send(channelQuery);
+
+        if (channelResult.Failed)
+            return;
+
+        IsUserMemberOfChannelQuery membershipQuery = new(int.Parse(Context.UserIdentifier), channelResult.Value.Id);
+        var isUserMember = await _sender.Send(membershipQuery);
+
+        if (!isUserMember)
+            return;
+
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, channelCode);
+    }
+
+    public async Task AddMembersToChannel(IList<ChannelMember> newMembers)
+    {
+        string channelCode = newMembers[0].Channel.Code;
+
+        // Alert existing members which users were added
+        await Clients.Group(channelCode)
+                     .SendAsync(_addedToChannelMethod, channelCode, newMembers);
+
+        var memberIds = newMembers.Select(e => e.Member.Id.ToString())
+                               .ToList()
+                               .AsReadOnly();
+
+        // Alert newly added users
+        await Clients.Users(memberIds)
+                     .SendAsync(_addedToChannelMethod, channelCode, newMembers);
+    }
+
+    public async Task RemoveMembersFromChannel(string channelCode, IList<int> removedMemberIds)
+    {
+        var userIds = removedMemberIds.Select(e => e.ToString())
+                                      .ToList()
+                                      .AsReadOnly();
+
+        await Clients.Group(channelCode)
+                     .SendAsync(_removedFromChannelMethod, channelCode, removedMemberIds);
     }
 }

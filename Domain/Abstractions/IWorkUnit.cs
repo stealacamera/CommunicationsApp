@@ -9,6 +9,7 @@ public interface IWorkUnit
     Task SaveChangesAsync();
 
     #region Repositories
+    IIdentityRepository IdentityRepository { get; }
     IUsersRepository UsersRepository { get; }
     IMessagesRepository MessagesRepository { get; }
     IMediaRepository MediaRepository { get; }

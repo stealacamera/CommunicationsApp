@@ -16,23 +16,26 @@ public class GetChannelByIdQueryHandler : BaseCommandHandler, IRequestHandler<Ge
 
     public async Task<Result<Channel>> Handle(GetChannelByIdQuery request, CancellationToken cancellationToken)
     {
-        var channel = await _workUnit.ChannelsRepository.GetByIdAsync(request.ChannelId);
+        var channel = await _workUnit.ChannelsRepository
+                                     .GetByIdAsync(request.ChannelId, cancellationToken);
 
         if (channel == null)
             return ChannelErrors.NotFound;
 
         if (!await _workUnit.ChannelMembersRepository
-                            .IsUserMemberOfChannelAsync(request.RequesterId, request.ChannelId))
-            return ChannelMemberErrors.UserIsNotMemberOfChannel;
+                            .IsUserMemberOfChannelAsync(request.RequesterId, request.ChannelId, cancellationToken))
+            return ChannelMemberErrors.NotMemberOfChannel;
 
         // Get members        
-        var channelMembers = await _workUnit.ChannelMembersRepository.GetAllForChannelAsync(channel.Id);
+        var channelMembers = await _workUnit.ChannelMembersRepository
+                                            .GetAllForChannelAsync(channel.Id, cancellationToken);
+
         var members = channelMembers.Select(async member =>
                                         {
                                             var user = await _workUnit.UsersRepository.GetByIdAsync(member.MemberId);
 
                                             return new ChannelMember(
-                                                new User(user.Id, user.UserName, user.Email), 
+                                                new User(user.Id, user.UserName, user.Email),
                                                 ChannelRole.FromValue(member.RoleId),
                                                 new Channel_BriefDescription(channel.Id, channel.Name, channel.Code));
                                         })

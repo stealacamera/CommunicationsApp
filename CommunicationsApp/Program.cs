@@ -1,6 +1,7 @@
+using CommunicationsApp.Application;
 using CommunicationsApp.Infrastructure;
 using CommunicationsApp.Web.Common.Hubs;
-using Microsoft.AspNetCore.Authentication.Cookies;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,8 +15,19 @@ builder.Services.AddAuthentication()
                     googleOptions.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
                 });
 
+builder.Services.RegisterApplicationServices();
 builder.Services.RegisterInfrastructureServices(builder.Configuration);
+
+builder.WebHost.ConfigureKestrel(options => 
+    options.Limits.MaxRequestBodySize = 10 * 1024 * 1024);
+
 builder.Services.AddSignalR();
+
+Log.Logger = new LoggerConfiguration().ReadFrom
+                                      .Configuration(builder.Configuration)
+                                      .CreateLogger();
+
+builder.Host.UseSerilog();
 
 var app = builder.Build();
 

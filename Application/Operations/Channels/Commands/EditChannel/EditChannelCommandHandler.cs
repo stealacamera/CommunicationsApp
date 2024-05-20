@@ -16,13 +16,13 @@ public sealed class EditChannelCommandHandler : BaseCommandHandler, IRequestHand
     public async Task<Result> Handle(EditChannelCommand request, CancellationToken cancellationToken)
     {
         var channel = await _workUnit.ChannelsRepository
-                                     .GetByIdAsync(request.ChannelId);
+                                     .GetByIdAsync(request.ChannelId, cancellationToken);
 
         if (channel == null)
             return ChannelErrors.NotFound;
 
         var membership = await _workUnit.ChannelMembersRepository
-                                        .GetByIdsAsync(request.RequesterId, channel.Id);
+                                        .GetByIdsAsync(request.RequesterId, channel.Id, cancellationToken);
 
         if (membership == null || membership.RoleId != ChannelRole.Owner)
             return UserErrors.Unauthorized;

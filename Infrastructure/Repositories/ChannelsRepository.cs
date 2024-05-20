@@ -11,13 +11,10 @@ internal class ChannelsRepository
     {
     }
 
-    public override async Task<bool> DoesInstanceExistAsync(int id)
-        => await GetByIdAsync(id) != null;
-
-    public override Task<Channel> AddAsync(Channel entity)
+    public override Task<Channel> AddAsync(Channel entity, CancellationToken cancellationToken)
     {
         entity.Code = CreateUniqueCode();
-        return base.AddAsync(entity);
+        return base.AddAsync(entity, cancellationToken);
     }
 
     private string CreateUniqueCode()
@@ -29,17 +26,17 @@ internal class ChannelsRepository
         return shortenedCode.Remove(shortenedCode.Length - 2); 
     }
 
-    public async Task<Channel?> GetByCodeAsync(string code)
+    public async Task<Channel?> GetByCodeAsync(string code, CancellationToken cancellationToken)
     {
         IQueryable<Channel> query = _untrackedSet.Where(e => e.Code == code);
-        return await query.FirstOrDefaultAsync();
+        return await query.FirstOrDefaultAsync(cancellationToken);
     }
 
-    public async Task<IEnumerable<Channel>> GetAllForUserAsync(int userId)
+    public async Task<IEnumerable<Channel>> GetAllForUserAsync(int userId, CancellationToken cancellationToken)
     {
         IQueryable<Channel> query = _untrackedSet.Where(
             e => e.Members.Where(e => e.Id == userId).Any());
 
-        return await query.ToListAsync();
+        return await query.ToListAsync(cancellationToken);
     }
 }

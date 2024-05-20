@@ -31,12 +31,22 @@ public class WorkUnit : IWorkUnit
         await _dbContext.SaveChangesAsync();
     }
 
+    private IIdentityRepository _identityRepository;
+    public IIdentityRepository IdentityRepository
+    {
+        get
+        {
+            _identityRepository ??= new IdentityRepository(_signInManager);
+            return _identityRepository;
+        }
+    }
+
     private IUsersRepository _usersRepository;
     public IUsersRepository UsersRepository
     {
         get
         {
-            _usersRepository ??= new UsersRepository(_userManager, _signInManager);
+            _usersRepository ??= new UsersRepository(_userManager);
             return _usersRepository;
         }
     }

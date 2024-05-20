@@ -2,6 +2,8 @@
 using CommunicationsApp.Application.Operations.Messages.Commands.CreateMessage;
 using CommunicationsApp.Application.Operations.Messages.Commands.DeleteMessage;
 using CommunicationsApp.Application.Operations.Messages.Queries.GetAllMessagesForChannel;
+using CommunicationsApp.Application.Operations.Multimedia.Queries.GetAllForMessage;
+using CommunicationsApp.Domain.Common.Enums;
 using CommunicationsApp.Web.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -41,31 +43,75 @@ public class MessagesController : BaseController
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        if (message.Message.IsNullOrEmpty() && message.Media.IsNullOrEmpty())
-            return BadRequest("Cannot send empty message");
+        if (message.Text.IsNullOrEmpty() && message.Media.IsNullOrEmpty())
+            return StatusCode(StatusCodes.Status422UnprocessableEntity, "Cannot send empty message");
 
-        CreateMessageCommand command = new(message.Message, GetCurrentUserId(), id, message.Media);
+        CreateMessageCommand command = new(message.Text, GetCurrentUserId(), id, message.Media);
         var createResult = await Sender.Send(command);
 
-        if(createResult.Failed)
+        if (createResult.Failed)
             return BadRequest(createResult.Error.Description);
 
         SaveFiles(message.Media, createResult.Value.Media);
         return Created(string.Empty, createResult.Value);
     }
 
+    [HttpDelete]
     public async Task<IActionResult> Delete(int id)
     {
+        var messageMediaResult = await Sender.Send(new GetAllMediaForMessageQuery(id));
+
+        if (messageMediaResult.Failed)
+            return NotFound();
+
         DeleteMessageCommand command = new(id, GetCurrentUserId());
         var deleteResult = await Sender.Send(command);
 
-        return deleteResult.Succeded 
-               ? NoContent() 
-               : BadRequest(deleteResult.Error.Description);
+        if (deleteResult.Succeded)
+        {
+            RemoveFiles(messageMediaResult.Value);
+
+            Response.StatusCode = StatusCodes.Status204NoContent;
+            return new JsonResult(deleteResult.Value.Id);
+        }
+        else
+            return BadRequest(deleteResult.Error.Description);
+    }
+
+    // todo: move to inotification? possible event
+    private void RemoveFiles(IList<Media> files)
+    {
+        if (files == null)
+            return;
+
+        foreach(var file in files)
+        {
+            string folder;
+
+            if (file.Type == MediaType.Image)
+                folder = _imagesFolder;
+            else if (file.Type == MediaType.Video)
+                folder = _videosFolder;
+            else
+                folder = _documentsFolder;
+
+            RemoveFileFromRootPath(_hostEnv.WebRootPath, folder, file.Filename);
+        }
+    }
+
+    private void RemoveFileFromRootPath(string rootPath, string folderPath, string fileName)
+    {
+        string path = Path.Combine(rootPath, folderPath, fileName);
+
+        if (System.IO.File.Exists(path))
+            System.IO.File.Delete(path);
     }
 
     private void SaveFiles(IFormFileCollection files, IList<Media> media)
     {
+        if (files == null)
+            return;
+
         for (int i = 0; i < files.Count; i++)
         {
             string folderPath;
@@ -85,10 +131,9 @@ public class MessagesController : BaseController
     private void SaveFileToRootPath(string rootPath, string folderPath, IFormFile file, string filename)
     {
         var uploadPath = Path.Combine(rootPath, folderPath);
-        var extension = Path.GetExtension(filename);
 
         Directory.CreateDirectory(uploadPath);
-        using (var fileStr = new FileStream(Path.Combine(uploadPath, filename + extension), FileMode.Create))
+        using (var fileStr = new FileStream(Path.Combine(uploadPath, filename), FileMode.Create))
         {
             file.CopyTo(fileStr);
         }

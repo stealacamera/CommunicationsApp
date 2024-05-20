@@ -12,6 +12,6 @@ internal sealed class LogoutUserCommandHandler : BaseCommandHandler, IRequestHan
 
     public async Task Handle(LogoutUserCommand request, CancellationToken cancellationToken)
     {
-        await _workUnit.UsersRepository.LogOutUserAsync();
+        await _workUnit.IdentityRepository.LogOutUserAsync();
     }
 }

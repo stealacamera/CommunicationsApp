@@ -12,5 +12,5 @@ internal sealed class GetExternalAuthSchemesQueryHandler : BaseCommandHandler, I
     }
 
     public async Task<IEnumerable<AuthenticationScheme>> Handle(GetExternalAuthSchemesQuery request, CancellationToken cancellationToken)
-        => await _workUnit.UsersRepository.GetExternalAuthSchemesAsync();
+        => await _workUnit.IdentityRepository.GetExternalAuthSchemesAsync();
 }

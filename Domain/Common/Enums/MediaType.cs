@@ -2,13 +2,11 @@
 
 namespace CommunicationsApp.Domain.Common.Enums;
 
-public sealed class MediaType : SmartEnum<MediaType>
+public sealed class MediaType : SmartEnum<MediaType, byte>
 {
-    public static MediaType Image = new("Image", 0),
-                            Document = new("Document", 1),
-                            Video = new("Video", 2);
+    public static MediaType Image = new("Image", 1),
+                            Document = new("Document", 2),
+                            Video = new("Video", 3);
 
-    private MediaType(string name, int value) : base(name, value)
-    {
-    }
+    private MediaType(string name, byte value) : base(name, value) { }
 }

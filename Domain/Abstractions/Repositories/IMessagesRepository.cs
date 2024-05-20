@@ -5,6 +5,11 @@ namespace CommunicationsApp.Domain.Abstractions.Repositories;
 
 public interface IMessagesRepository : IBaseStrongEntityRepository<Message, int>
 {
-    Task<CursorPaginatedEnumerable<int, Message>> GetAllForChannelAsync(int channelId, int? cursor, int pageSize);
-    Task<Message?> GetLatestForChannelAsync(int channelId);
+    Task<CursorPaginatedEnumerable<int, Message>> GetAllForChannelAsync(
+        int channelId, 
+        int? cursor, 
+        int pageSize, 
+        CancellationToken cancellationToken);
+    
+    Task<Message?> GetLatestForChannelAsync(int channelId, CancellationToken cancellationToken);
 }

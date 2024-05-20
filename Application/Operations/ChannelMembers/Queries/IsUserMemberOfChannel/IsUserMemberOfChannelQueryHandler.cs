@@ -13,7 +13,7 @@ internal sealed class IsUserMemberOfChannelQueryHandler : BaseCommandHandler, IR
     public async Task<bool> Handle(IsUserMemberOfChannelQuery request, CancellationToken cancellationToken)
     {
         var membership = await _workUnit.ChannelMembersRepository
-                                        .GetByIdsAsync(request.UserId, request.ChannelId);
+                                        .GetByIdsAsync(request.UserId, request.ChannelId, cancellationToken);
 
         return membership != null;
     }

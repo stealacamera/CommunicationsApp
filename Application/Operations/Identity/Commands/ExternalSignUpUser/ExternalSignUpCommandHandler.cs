@@ -17,7 +17,7 @@ internal sealed class ExternalSignUpCommandHandler : BaseCommandHandler, IReques
 
     public async Task<Result> Handle(ExternalSignUpCommand request, CancellationToken cancellationToken)
     {
-        var loginInfo = await _workUnit.UsersRepository.GetExternalLoginInfoAsync();
+        var loginInfo = await _workUnit.IdentityRepository.GetExternalLoginInfoAsync();
 
         if (loginInfo == null)
             return IdentityErrors.ExternalLoginError;
@@ -37,10 +37,10 @@ internal sealed class ExternalSignUpCommandHandler : BaseCommandHandler, IReques
         var createResult = await _workUnit.UsersRepository.AddAsync(user);
 
         if (!createResult.Succeeded)
-            return new Error(createResult.Errors.First().Description);
+            return new Error(createResult.Errors.First().Description, ErrorType.General);
 
         await _workUnit.SaveChangesAsync();
-        await _workUnit.UsersRepository.SignInUserAsync(user);
+        await _workUnit.IdentityRepository.SignInUserAsync(user);
 
         return Result.Success();
     }

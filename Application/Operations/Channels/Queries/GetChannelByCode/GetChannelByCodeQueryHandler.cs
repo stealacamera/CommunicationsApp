@@ -16,7 +16,8 @@ internal sealed class GetChannelByCodeQueryHandler
 
     public async Task<Result<Channel_BriefDescription>> Handle(GetChannelByCodeQuery request, CancellationToken cancellationToken)
     {
-        var channel = await _workUnit.ChannelsRepository.GetByCodeAsync(request.ChannelCode);
+        var channel = await _workUnit.ChannelsRepository
+                                     .GetByCodeAsync(request.ChannelCode, cancellationToken);
 
         return channel == null
                ? ChannelErrors.NotFound

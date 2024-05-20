@@ -4,15 +4,21 @@ using CommunicationsApp.Application.Common.Errors;
 using CommunicationsApp.Application.DTOs;
 using CommunicationsApp.Domain.Abstractions;
 using CommunicationsApp.Domain.Common;
+using CommunicationsApp.Domain.Events;
 using MediatR;
 
 namespace CommunicationsApp.Application.Operations.Channels.Commands.CreateChannel;
 
-internal sealed class CreateChannelCommandHandler 
+internal sealed class CreateChannelCommandHandler
     : BaseCommandHandler, IRequestHandler<CreateChannelCommand, Result<Channel_BriefDescription>>
 {
-    public CreateChannelCommandHandler(IWorkUnit workUnit) : base(workUnit)
+    private IPublisher _publisher;
+
+    public CreateChannelCommandHandler(
+        IWorkUnit workUnit,
+        IPublisher publisher) : base(workUnit)
     {
+        _publisher = publisher;
     }
 
     public async Task<Result<Channel_BriefDescription>> Handle(CreateChannelCommand request, CancellationToken cancellationToken)
@@ -29,18 +35,26 @@ internal sealed class CreateChannelCommandHandler
                                      {
                                          CreatedAt = DateTime.Now,
                                          Name = request.Name
-                                     });
+                                     }, cancellationToken);
 
             await _workUnit.SaveChangesAsync();
 
             foreach (var memberId in request.MemberIds)
+            {
                 await _workUnit.ChannelMembersRepository
                                .AddAsync(new Domain.Entities.ChannelMember
                                {
                                    ChannelId = channel.Id,
                                    MemberId = memberId,
                                    RoleId = ChannelRole.Member.Value
-                               });
+                               }, cancellationToken);
+
+                var user = await _workUnit.UsersRepository.GetByIdAsync(memberId);
+
+                await _publisher.Publish(
+                    new UserAddedToChannel(user.Email, channel.Id, DateTime.Now),
+                    cancellationToken);
+            }
 
             await _workUnit.ChannelMembersRepository
                            .AddAsync(new Domain.Entities.ChannelMember
@@ -48,7 +62,7 @@ internal sealed class CreateChannelCommandHandler
                                ChannelId = channel.Id,
                                MemberId = request.OwnerId,
                                RoleId = ChannelRole.Owner.Value
-                           });
+                           }, cancellationToken);
 
             await _workUnit.SaveChangesAsync();
             return new Channel_BriefDescription(channel.Id, channel.Name, channel.Code);

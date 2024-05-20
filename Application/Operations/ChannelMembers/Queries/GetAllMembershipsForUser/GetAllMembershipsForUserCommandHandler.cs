@@ -20,12 +20,12 @@ public sealed class GetAllMembershipsForUserCommandHandler
         if (!await _workUnit.UsersRepository.DoesUserExistAsync(request.UserId))
             return UserErrors.NotFound;
 
-        var memberships = await _workUnit.ChannelMembersRepository.GetAllForUserAsync(request.UserId);
+        var memberships = await _workUnit.ChannelMembersRepository.GetAllForUserAsync(request.UserId, cancellationToken);
 
         return memberships.Select(async member =>
                             {
                                 var user = await _workUnit.UsersRepository.GetByIdAsync(member.MemberId);
-                                var channel = await _workUnit.ChannelsRepository.GetByIdAsync(member.ChannelId);
+                                var channel = await _workUnit.ChannelsRepository.GetByIdAsync(member.ChannelId, cancellationToken);
 
                                 return new ChannelMember(
                                     new User(user.Id, user.UserName, user.Email),

@@ -15,7 +15,7 @@ internal sealed class ExternalLoginCommandHandler : BaseCommandHandler, IRequest
 
     public async Task<Result> Handle(ExternalLoginCommand request, CancellationToken cancellationToken)
     {
-        var loginInfo = await _workUnit.UsersRepository.GetExternalLoginInfoAsync();
+        var loginInfo = await _workUnit.IdentityRepository.GetExternalLoginInfoAsync();
 
         if (loginInfo == null)
             return IdentityErrors.ExternalLoginError;
@@ -30,7 +30,7 @@ internal sealed class ExternalLoginCommandHandler : BaseCommandHandler, IRequest
         if (user == null)
             return UserErrors.NotFound;
 
-        await _workUnit.UsersRepository.SignInUserAsync(user);
+        await _workUnit.IdentityRepository.SignInUserAsync(user);
         return Result.Success();
     }
 }

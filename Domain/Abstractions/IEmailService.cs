@@ -7,4 +7,7 @@ public interface IEmailService
         int userId,
         string userEmail,
         string emailConfirmationToken);
+
+    Task SendMemberRemovalEmailAsync(string userEmail, string channelName);
+    Task SendMemberAddedEmailAsync(string userEmail, string channelName);
 }

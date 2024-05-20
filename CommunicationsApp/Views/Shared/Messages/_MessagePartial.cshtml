@@ -29,14 +29,14 @@
             }
         </div>
 
-        <div>
+        <div id="messageMedia@(Model.Id)">
             @if (Model.Media != null && Model.Media.Any())
             {
                 @foreach (var file in Model.Media)
                 {
                     @if (file.Type == MediaType.Image)
                     {
-                        <img src="/media/images/@(file.Filename)" />
+                        <img src="/media/images/@(file.Filename)" width="200" />
                     }
                     else if (file.Type == MediaType.Video)
                     {

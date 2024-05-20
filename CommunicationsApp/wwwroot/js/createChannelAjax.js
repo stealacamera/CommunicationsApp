@@ -1,8 +1,12 @@
-﻿const createChannelForm = document.getElementById('createChannelForm');
-const channelSidebar = document.getElementById('channelsSidebar');
+﻿const createChannelForm = document.getElementById('createChannelForm'),
+      channelSidebar = document.getElementById('channelsSidebar');
+const createChannelModal = document.getElementById('createChannelModal'),
+      modal = bootstrap.Modal.getInstance(createChannelModal);
 
-const createChannelModal = document.getElementById('createChannelModal');
-const modal = bootstrap.Modal.getInstance(createChannelModal);
+const memberSearchInput = document.getElementById('memberSearchInput'),
+      membersSearchResult = document.getElementById('membersSearchResult');
+
+addUserQueryFunctionality(memberSearchInput, membersSearchResult);
 
 createChannelForm.addEventListener('submit', e => {
     e.preventDefault();

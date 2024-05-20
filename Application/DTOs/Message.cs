@@ -2,7 +2,7 @@
 
 public record Message(
     int Id, 
-    string Text,
+    string? Text,
     DateTime CreatedAt,
     User User,
     IList<Media>? Media,
