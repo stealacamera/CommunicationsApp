@@ -14,5 +14,8 @@ public interface IUsersRepository
     Task<User?> GetByEmailAsync(string email, bool excludeDeleted = true, bool excludeNonConfirmedEmail = true);
     Task<bool> DoesUserExistAsync(int id, bool excludeDeleted = true);
 
-    Task<IEnumerable<User>> QueryByEmailAndUsernameAsync(string queryString, CancellationToken cancellationToken, int? excludeUserId = null);
+    Task<IEnumerable<User>> QueryByEmailAndUsernameAsync(
+        string queryString, 
+        int? excludeUserId = null, 
+        CancellationToken cancellationToken = default);
 }

@@ -29,14 +29,17 @@
                     memberCheckbox.type = 'checkbox';
                     memberCheckbox.name = 'memberIds';
                     memberCheckbox.value = member.id;
+                    memberCheckbox.classList.add('form-check-input');
 
                     const label = document.createElement('label');
+                    label.classList.add('form-check-label');
                     label.setAttribute('for', memberCheckbox.id);
                     label.innerHTML = `<span style="font-weight: bold">${member.userName}</span> ${member.email}`
 
                     const memberDiv = document.createElement('div');
                     memberDiv.appendChild(memberCheckbox);
                     memberDiv.appendChild(label);
+                    memberDiv.classList.add('form-check');
 
                     usersQueryResultDiv.appendChild(memberDiv);
                 });

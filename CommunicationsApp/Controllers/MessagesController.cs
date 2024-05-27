@@ -1,13 +1,15 @@
-﻿using CommunicationsApp.Application.DTOs;
-using CommunicationsApp.Application.Operations.Messages.Commands.CreateMessage;
-using CommunicationsApp.Application.Operations.Messages.Commands.DeleteMessage;
-using CommunicationsApp.Application.Operations.Messages.Queries.GetAllMessagesForChannel;
-using CommunicationsApp.Application.Operations.Multimedia.Queries.GetAllForMessage;
+﻿using CommunicationsApp.Application.Behaviour.Operations.Messages.Commands.CreateMessage;
+using CommunicationsApp.Application.Behaviour.Operations.Messages.Commands.DeleteMessage;
+using CommunicationsApp.Application.Behaviour.Operations.Messages.Queries.GetAllMessagesForChannel;
+using CommunicationsApp.Application.DTOs;
+using CommunicationsApp.Application.Behaviour.Operations.Multimedia.Queries.GetAllForMessage;
 using CommunicationsApp.Domain.Common.Enums;
 using CommunicationsApp.Web.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using System.ComponentModel.DataAnnotations;
+using FluentValidation.AspNetCore;
 
 namespace CommunicationsApp.Web.Controllers;
 
@@ -26,65 +28,70 @@ public class MessagesController : BaseController
         _hostEnv = hostEnv;
     }
 
+    #region API
     [HttpGet("channels/{id:int}/messages")]
-    public async Task<IActionResult> Get(int id, int cursor)
+    public async Task<IActionResult> Get(int id, [Range(0, int.MaxValue)] int cursor)
     {
-        GetAllMessagesForChannelQuery query = new(id, GetCurrentUserId(), GetStandardPaginationSize(), cursor);
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        GetAllMessagesForChannelQuery query = new(id, GetCurrentUserId(), StandardPaginationSize, cursor);
         var queryResult = await Sender.Send(query);
 
-        return queryResult.Failed
-               ? BadRequest(queryResult.Error.Description)
-               : Ok(queryResult.Value);
+        return ConvertResultToResponse(queryResult, () => Ok(queryResult.Value));
     }
 
     [HttpPost("channels/{id:int}/messages")]
     public async Task<IActionResult> Create(int id, Message_AddRequestModel message)
     {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
+        var validationResult = await new MessageValidator().ValidateAsync(message);
 
-        if (message.Text.IsNullOrEmpty() && message.Media.IsNullOrEmpty())
-            return StatusCode(StatusCodes.Status422UnprocessableEntity, "Cannot send empty message");
+        if (!validationResult.IsValid)
+        {
+            validationResult.AddToModelState(ModelState);
+            return BadRequest(ModelState);
+        }
 
         CreateMessageCommand command = new(message.Text, GetCurrentUserId(), id, message.Media);
         var createResult = await Sender.Send(command);
 
-        if (createResult.Failed)
-            return BadRequest(createResult.Error.Description);
-
-        SaveFiles(message.Media, createResult.Value.Media);
-        return Created(string.Empty, createResult.Value);
+        return ConvertResultToResponse(
+            createResult,
+            () =>
+            {
+                SaveFiles(message.Media, createResult.Value.Media);
+                return Created(string.Empty, createResult.Value);
+            });
     }
 
     [HttpDelete]
     public async Task<IActionResult> Delete(int id)
     {
-        var messageMediaResult = await Sender.Send(new GetAllMediaForMessageQuery(id));
+        GetAllMediaForMessageQuery mediaQuery = new(id);
+        var mediaResult = await Sender.Send(mediaQuery);
 
-        if (messageMediaResult.Failed)
-            return NotFound();
+        if (mediaResult.Failed)
+            return ConvertFailureToResponse(mediaResult);
 
         DeleteMessageCommand command = new(id, GetCurrentUserId());
         var deleteResult = await Sender.Send(command);
 
-        if (deleteResult.Succeded)
-        {
-            RemoveFiles(messageMediaResult.Value);
-
-            Response.StatusCode = StatusCodes.Status204NoContent;
-            return new JsonResult(deleteResult.Value.Id);
-        }
-        else
-            return BadRequest(deleteResult.Error.Description);
+        return ConvertResultToResponse(
+            deleteResult,
+            () =>
+            {
+                RemoveFiles(mediaResult.Value);
+                return NoContent();
+            });
     }
+    #endregion
 
-    // todo: move to inotification? possible event
     private void RemoveFiles(IList<Media> files)
     {
         if (files == null)
             return;
 
-        foreach(var file in files)
+        foreach (var file in files)
         {
             string folder;
 
@@ -107,7 +114,7 @@ public class MessagesController : BaseController
             System.IO.File.Delete(path);
     }
 
-    private void SaveFiles(IFormFileCollection files, IList<Media> media)
+    private void SaveFiles(IFormFileCollection? files, IList<Media>? media)
     {
         if (files == null)
             return;

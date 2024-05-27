@@ -18,6 +18,7 @@ builder.Services.AddAuthentication()
 builder.Services.RegisterApplicationServices();
 builder.Services.RegisterInfrastructureServices(builder.Configuration);
 
+
 builder.WebHost.ConfigureKestrel(options => 
     options.Limits.MaxRequestBodySize = 10 * 1024 * 1024);
 
@@ -31,15 +32,17 @@ builder.Host.UseSerilog();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-//if (!app.Environment.IsDevelopment())
-//{
-//    app.UseExceptionHandler("/Home/Error");
-//    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-//    app.UseHsts();
-//}
+app.UseExceptionHandler(new ExceptionHandlerOptions { ExceptionHandlingPath = "/Errors/Index" });
+app.Use(async (context, next) =>
+{
+    await next();
 
-//app.UseExceptionHandler(new ExceptionHandlerOptions { ExceptionHandlingPath = "/Errors/Index" });
+    if (context.Response.StatusCode == 404 && !context.Response.HasStarted)
+    {
+        context.Request.Path = "/Errors/NotFound";
+        await next();
+    }
+});
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();

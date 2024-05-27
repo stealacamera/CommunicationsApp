@@ -1,4 +1,4 @@
-﻿using CommunicationsApp.Application.Operations.Channels.Queries.GetAllChannelsForUser;
+﻿using CommunicationsApp.Application.Behaviour.Operations.Channels.Queries.GetAllChannelsForUser;
 using CommunicationsApp.Web.Controllers;
 using Microsoft.AspNetCore.Mvc;
 
@@ -20,10 +20,12 @@ public class HomeController : BaseController
         GetAllChannelsForUserQuery command = new(userId);
         var userChannelsResult = await Sender.Send(command);
 
-        if (userChannelsResult.Failed)
-            throw new UnauthorizedAccessException();
-
-        ViewBag.CurrentUserId = userId;
-        return View(userChannelsResult.Value);
+        return ConvertResultToResponse(
+            userChannelsResult,
+            () =>
+            {
+                ViewBag.CurrentUserId = userId;
+                return View(userChannelsResult.Value);
+            });
     }
 }

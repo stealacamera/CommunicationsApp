@@ -2,19 +2,20 @@
 
 joinChannelForm.addEventListener('submit', e => {
     e.preventDefault();
-    const code = joinChannelForm.querySelector('input[name="code"]').value;
+    const code = joinChannelForm.querySelector('input[name="code"]').value.trim();
+
+    if (!code) {
+        showToast("Invalid code");
+        return;
+    }
 
     $.ajax({
-        url: joinChannelForm.action + `?code=${code}`,
+        url: joinChannelForm.action + `?code=${encodeURIComponent(code)}`,
         type: 'POST',
-        success: membership => connection.invoke('JoinChannel', membership.channel.code),
+        success: membership => connection.invoke('AddMemberToChannel', membership[0]),
         error: xhr =>
-            Toastify({
-                text: xhr.status == 500 ? 'Something went wrong, please try again in a moment' : xhr.responseText,
-                duration: 3000,
-                close: true,
-                gravity: "bottom",
-                position: "right",
-            }).showToast()
+            xhr.status === 500 ?
+                showToast('Something went wrong, please try again in a moment') :
+                showErrorsToast(xhr.responseJSON)
     });
 });

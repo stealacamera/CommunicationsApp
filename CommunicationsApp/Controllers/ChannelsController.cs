@@ -1,9 +1,12 @@
-﻿using CommunicationsApp.Application.DTOs;
-using CommunicationsApp.Application.Operations.Channels.Commands.CreateChannel;
-using CommunicationsApp.Application.Operations.Channels.Commands.EditChannel;
-using CommunicationsApp.Application.Operations.Channels.Queries.GetChannelById;
-using CommunicationsApp.Application.Operations.Messages.Queries.GetAllMessagesForChannel;
+﻿using CommunicationsApp.Application.Behaviour.Operations.ChannelMembers.Queries.GetUserMembershipForChannel;
+using CommunicationsApp.Application.Behaviour.Operations.Channels.Commands.CreateChannel;
+using CommunicationsApp.Application.Behaviour.Operations.Channels.Commands.EditChannel;
+using CommunicationsApp.Application.Behaviour.Operations.Channels.Queries.GetChannelById;
+using CommunicationsApp.Application.Behaviour.Operations.Messages.Queries.GetAllMessagesForChannel;
+using CommunicationsApp.Application.DTOs;
 using CommunicationsApp.Web.Models;
+using CommunicationsApp.Web.Models.ViewModels;
+using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
@@ -17,29 +20,40 @@ public class ChannelsController : BaseController
     {
     }
 
+    #region API
     [HttpPost("channels")]
-    public async Task<IActionResult> Create([FromBody] CreateChannelDTO model)
+    public async Task<IActionResult> Create([FromBody] Channel_AddRequestModel model)
     {
+        var validationResult = await new ChannelValidator().ValidateAsync(model);
+
+        if (!validationResult.IsValid)
+        {
+            validationResult.AddToModelState(ModelState);
+            return BadRequest(ModelState);
+        }
+
         CreateChannelCommand command = new(GetCurrentUserId(), model.ChannelName, model.MemberIds.ToList());
         var newChannelResult = await Sender.Send(command);
 
-        return newChannelResult.Failed
-               ? BadRequest(newChannelResult.Error.Description)
-               : Created(nameof(Create), new Channel_BriefOverview(newChannelResult.Value, null));
+        return ConvertResultToResponse(
+            newChannelResult,
+            () => Created(
+                nameof(Create), 
+                new Channel_BriefOverview(newChannelResult.Value, null)));
     }
 
     [HttpPatch("channels/{id:int}")]
-    public async Task<IActionResult> Edit(int id, [FromBody, Required, MaxLength(55)] string newName)
+    public async Task<IActionResult> Edit(
+        int id, 
+        [FromBody, Required, MaxLength(55)] string newName)
     {
-        if (!ModelState.IsValid)
+        if(!ModelState.IsValid)
             return BadRequest(ModelState);
 
         EditChannelCommand command = new(GetCurrentUserId(), id, newName);
         var editResult = await Sender.Send(command);
 
-        return editResult.Failed
-               ? BadRequest(editResult.Error.Description)
-               : Ok();
+        return ConvertResultToResponse(editResult, () => Ok());
     }
 
     [HttpGet("channels/{id:int}")]
@@ -49,19 +63,31 @@ public class ChannelsController : BaseController
         var channelResult = await Sender.Send(channelCommand);
 
         if (channelResult.Failed)
-            return BadRequest(channelResult.Error.Description);
+            return ConvertFailureToResponse(channelResult);
 
-        GetAllMessagesForChannelQuery command = new(id, GetCurrentUserId(), GetStandardPaginationSize());
+        GetAllMessagesForChannelQuery command = new(id, GetCurrentUserId(), StandardPaginationSize);
         var messagesResult = await Sender.Send(command);
 
-        if (messagesResult.Succeded)
-        {
-            Response.StatusCode = StatusCodes.Status200OK;
-            return PartialView(
-                "/Views/Shared/Messages/_ChannelMessagesPartial.cshtml", 
-                new ChannelOverviewVM(channelResult.Value, messagesResult.Value));
-        }
-        else
-            return BadRequest(messagesResult.Error.Description);
+        GetUserMembershipForChannelQuery membershipQuery = new(GetCurrentUserId(), id);
+        var membershipResult = await Sender.Send(membershipQuery);
+        
+        if(membershipResult.Failed)
+            return ConvertFailureToResponse(membershipResult);
+
+        return ConvertResultToResponse(
+            messagesResult,
+            () =>
+            {
+                Response.StatusCode = StatusCodes.Status200OK;
+
+                return PartialView(
+                    "/Views/Shared/Messages/_ChannelMessagesPartial.cshtml",
+                    new ChannelMessagesVM
+                    {
+                        ChannelOverview = new ChannelOverviewVM(channelResult.Value, messagesResult.Value),
+                        CurrentUser = membershipResult.Value!
+                    });
+            });
     }
+    #endregion
 }

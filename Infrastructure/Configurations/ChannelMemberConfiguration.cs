@@ -1,4 +1,5 @@
-﻿using CommunicationsApp.Domain.Entities;
+﻿using CommunicationsApp.Application.Common.Enums;
+using CommunicationsApp.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

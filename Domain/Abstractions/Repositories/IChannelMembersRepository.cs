@@ -6,10 +6,10 @@ public interface IChannelMembersRepository : IBaseRepository<ChannelMember>
 {
     void Remove(ChannelMember member);
 
-    Task<ChannelMember?> GetByIdsAsync(int memberId, int channelId, CancellationToken cancellationToken);
-    Task<bool> IsUserMemberOfChannelAsync(int userId, int channelId, CancellationToken cancellationToken);
+    Task<ChannelMember?> GetByIdsAsync(int memberId, int channelId, CancellationToken cancellationToken = default);
+    Task<bool> IsUserMemberOfChannelAsync(int userId, int channelId, CancellationToken cancellationToken = default);
 
-    Task<IEnumerable<ChannelMember>> GetAllForChannelAsync(int channelId, CancellationToken cancellationToken);
-    Task<int> GetCountForChannelAsync(int channelId, CancellationToken cancellationToken);
-    Task<IEnumerable<ChannelMember>> GetAllForUserAsync(int userId, CancellationToken cancellationToken);
+    Task<IEnumerable<ChannelMember>> GetAllForChannelAsync(int channelId, CancellationToken cancellationToken = default);
+    Task<int> GetCountForChannelAsync(int channelId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<ChannelMember>> GetAllForUserAsync(int userId, CancellationToken cancellationToken = default);
 }

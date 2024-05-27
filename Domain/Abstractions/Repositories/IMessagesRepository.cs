@@ -9,7 +9,7 @@ public interface IMessagesRepository : IBaseStrongEntityRepository<Message, int>
         int channelId, 
         int? cursor, 
         int pageSize, 
-        CancellationToken cancellationToken);
+        CancellationToken cancellationToken = default);
     
-    Task<Message?> GetLatestForChannelAsync(int channelId, CancellationToken cancellationToken);
+    Task<Message?> GetLatestForChannelAsync(int channelId, CancellationToken cancellationToken = default);
 }

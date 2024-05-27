@@ -4,15 +4,16 @@
     .build();
 
 connection.onreconnecting(() => {
-    // TODO block page from functioning
-
+    blockPage();
     alert('Connection lost. Trying to reconnect');
 });
 
 connection.onreconnected(() => {
-    location.reload();
+    unblockPage();
     alert('Sucessfully reconnected');
 })
+
+connection.on('FunctionFailed', () => showToast('Something went wrong. Please referesh the page and try again'));
 
 connection.on('ReceiveMessage', (message, channelCode) => {
     const channelMessagesDiv = document.getElementById('channelMessages');
@@ -32,31 +33,39 @@ connection.on('ReceiveMessage', (message, channelCode) => {
     updateSidebarChannelPreviewMessage(channelCode, message);
 });
 
-connection.on('DeleteMessage', (messageId, channelCode) => {
+connection.on('DeleteMessage', (messageId) => {
     // Delete message if chat is open
+    const newMessage = 'Message was deleted';
     const messageContainer = document.getElementById(`openMessage${messageId}`);
+    const messageBubble = messageContainer.firstElementChild;
 
     if (messageContainer) {
-        const textContainer = document.getElementById(`openMessageText${messageId}`);
 
-        if (!textContainer)
-            return;
-
-        document.getElementById(`messageMedia${message.id}`).remove();
-        textContainer.innerHTML = `<span class="fst-italic">Message was deleted</span>`;
-
-        const optionsList = messageContainer.querySelector('[data-options-list]');
+        var optionsList = messageContainer.querySelector('[data-options-list]');
+        var mediaDiv = document.getElementById(`messageMedia${messageId}`);
 
         if (optionsList)
             optionsList.remove();
+
+        if (mediaDiv)
+            mediaDiv.remove();
+
+        var textContainer = document.getElementById(`openMessageText${messageId}`);
+
+        if (!textContainer) {
+            textContainer = document.createElement('p');
+            messageBubble.lastElementChild.insertBefore(textContainer);
+        }
+
+        textContainer.innerHTML = `<span class="fst-italic">${newMessage}</span>`;
     }
 
-    // Delete message in preview
-    updateSidebarChannelPreviewMessage(channelCode, message, true);
+    // Delete message if in preview
+    deleteSidebarChannelPreviewMessage(messageId);
 })
 
 connection.on('JoinChannel', channel => {
-    if (document.querySelector(`data-sidebar-channel-code="${channelCode}"`))
+    if (document.querySelector(`[data-sidebar-channel-code="${channel.channel.code}"]`))
         return;
 
     $.ajax({
@@ -67,6 +76,8 @@ connection.on('JoinChannel', channel => {
         success: sidebarView => {
             const channelSidebar = document.getElementById('channelsSidebar');
             channelSidebar.insertAdjacentHTML('afterbegin', sidebarView);
+
+            addShowFunctionality(channelSidebar.firstElementChild);
         },
         error: () => Toastify({
             text: 'Something went wrong. Please refresh the page if problem persists',
@@ -96,6 +107,7 @@ connection.on('AddedToChannel', (channelCode, newMemberships) => {
     // If user doesn't have channel in sidebar, they're a new member
     if (!document.querySelector(`data-sidebar-channel-code="${channelCode}"`))
         connection.invoke('JoinChannel', channelCode);
+
     // Otherwise add members to list if channel is currently open
     else {
         if (!document.querySelector(`data-open-chat-code="${channelCode}"`))
@@ -134,34 +146,53 @@ connection.on('RemovedFromChannel', (channelCode, removedMemberIds) => {
 
         removedMemberIds.forEach(memberId =>
             document.getElementById(`openChannelMember${memberId}`).remove());
+
+        const membersList = document.getElementById('openChatMembersList');
+
+        if (membersList.childElementCount <= 2)
+            document.getElementsByClassName('deleteChannelMemberForm').remove();
     }
 });
 
 async function start() {
     try {
-        contentBlock = document.createElement('div');
-
-        contentBlock.style.position = 'absolute';
-        contentBlock.style.top = 0;
-        contentBlock.style.left = 0;
-        contentBlock.style.bottom = 0;
-        contentBlock.style.right = 0;
-        contentBlock.style.height = '100%';
-        contentBlock.style.width = '100%';
-
-        contentBlock.style.opacity = 0.7;
-        contentBlock.style.color = 'white';
-
-        document.body.appendChild(contentBlock);
-
+        blockPage();
         await connection.start();
-        console.log("SignalR connection established.");
-
-        contentBlock.remove();
+        unblockPage();
     } catch (err) {
         console.log(err);
         setTimeout(start, 5000);
     }
 };
+
+function blockPage() {
+    contentBlock = document.createElement('div');
+    contentBlock.id = 'blockPage';
+
+    contentBlock.classList.add('d-flex');
+
+    contentBlock.style.opacity = 0.5;
+    contentBlock.style.background = '#6195d6';
+    contentBlock.style.width = '100%';
+    contentBlock.style.height = '100%';
+    contentBlock.style.top = 0;
+    contentBlock.style.left = 0;
+    contentBlock.style.position = 'fixed';
+    contentBlock.style.zIndex = 10;
+
+    const spinnerSymbol = document.createElement('i');
+    spinnerSymbol.classList.add('fa-solid', 'fa-spinner', 'fa-10x');
+
+    const spinnerContainer = document.createElement('span');
+    spinnerContainer.classList.add('position-absolute', 'top-50', 'start-50', 'translate-middle');
+    spinnerContainer.appendChild(spinnerSymbol);
+
+    contentBlock.appendChild(spinnerContainer);
+    document.body.appendChild(contentBlock);
+}
+
+function unblockPage() {
+    document.getElementById('blockPage').remove();
+}
 
 start();

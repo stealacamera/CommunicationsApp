@@ -1,49 +1,50 @@
-﻿@model CommunicationsApp.Web.Models.ChannelOverviewVM
+﻿@using CommunicationsApp.Web.Models.ViewModels
+@model CommunicationsApp.Web.Models.ViewModels.ChannelMessagesVM
 
-<div class="chat-container" data-open-chat-code="@Model.Channel.Code">
-    <div class="d-flex flex-row">
-        <div>
-            <p id="channelName" class="flex-grow-1 fw-bold">@Model.Channel.Name</p>
-            <button id="editChannelNameBtn" data-channel-id="@Model.Channel.Id" data-channel-code="@Model.Channel.Code" class="btn btn-secondary">
+<div class="chat-container" data-open-chat-code="@Model.ChannelOverview.Channel.Code">
+    <div class="d-flex flex-row justify-content-between">
+        <div class="d-flex flex-row gap-3">
+            <p id="channelName" class="flex-grow-1 fw-bold">@Model.ChannelOverview.Channel.Name</p>
+            <button id="editChannelNameBtn" data-channel-id="@Model.ChannelOverview.Channel.Id" data-channel-code="@Model.ChannelOverview.Channel.Code" class="btn btn-secondary">
                 <i class="fa-solid fa-pen-to-square"></i>
             </button>
         </div>
-        <p>Channel code: @Model.Channel.Code</p>
+        <p>Channel code: @Model.ChannelOverview.Channel.Code</p>
 
         <div class="dropdown-center">
             <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                 Members
             </button>
             <ul id="openChatMembersList" class="dropdown-menu">
-                <li class="dropdown-item">
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addNewMembersModal">
-                        Add members
-                    </button>
+                @*<li class="dropdown-item">
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addNewMembersModal">
+                Add members
+                </button>
                 </li>
-                <li><hr /></li>
+                <li><hr /></li>*@
 
-                @foreach (var member in Model.Channel.Members)
+                @foreach (var member in Model.ChannelOverview.Channel.Members)
                 {
-                    <partial name="/Views/Shared/Channels/_OpenChannelMemberListItemPartial.cshtml" model="member" />
+                    <partial name="/Views/Shared/Channels/_OpenChannelMemberListItemPartial.cshtml"
+                         model="new MembersListVM {
+                                ChannelMember = member,
+                                CurrentUser = Model.CurrentUser,
+                                IsGroupChannel = Model.ChannelOverview.Channel.Members.Count > 2 }" />
                 }
             </ul>
         </div>
     </div>
 
-    <div id="channelMessages" class="messages-container" data-channel-id="@Model.Channel.Id" data-next-cursor="@Model.Messages.NextCursor">
-        @if (!Model.Messages.Values.Any())
+    <div id="channelMessages" class="messages-container" data-channel-id="@Model.ChannelOverview.Channel.Id" data-next-cursor="@Model.ChannelOverview.Messages.NextCursor">
+        @if (Model.ChannelOverview.Messages.Values.Any())
         {
-            <p>No messages ...</p>
-        }
-        else
-        {
-            @foreach (var message in Model.Messages.Values.Reverse())
+            @foreach (var message in Model.ChannelOverview.Messages.Values.Reverse())
             {
                 <partial name="/Views/Shared/Messages/_MessagePartial.cshtml" model="message" />
             }
         }
     </div>
-    <form id="messageSendForm" asp-controller="Messages" asp-action="Create" asp-route-id="@Model.Channel.Id">
+    <form id="messageSendForm" asp-controller="Messages" asp-action="Create" asp-route-id="@Model.ChannelOverview.Channel.Id">
         <input type="file"
                class="form-control"
                id="messageMediaUpload"
@@ -51,7 +52,7 @@
                accept=".png,.jpg,.jpeg,video/*,application/pdf,application/msword,text/plain">
 
         <div class="input-group mt-3 mb-3">
-            <input type="hidden" id="channelCode" value="@Model.Channel.Code" />
+            <input type="hidden" id="channelCode" value="@Model.ChannelOverview.Channel.Code" />
             <input id="messageInput"
                    type="text"
                    maxlength="1000"
@@ -67,7 +68,7 @@
 </div>
 
 
-<div class="modal fade" id="addNewMembersModal" tabindex="-1" aria-labelledby="addNewMembersModalLabel" aria-hidden="true">
+@*<div class="modal fade" id="addNewMembersModal" tabindex="-1" aria-labelledby="addNewMembersModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -78,7 +79,7 @@
                 <form id="addNewMembersForm"
                       asp-controller="ChannelMembers"
                       asp-action="AddUserAsMembersToChannel"
-                      asp-route-channelId="@Model.Channel.Id">
+                      asp-route-channelId="@Model.ChannelOverview.Channel.Id">
                     <div class="form-group">
                         <label for="members">Select users</label>
 
@@ -96,4 +97,4 @@
             </div>
         </div>
     </div>
-</div>
+</div>*@

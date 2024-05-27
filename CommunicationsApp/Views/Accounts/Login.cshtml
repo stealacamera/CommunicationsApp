@@ -7,13 +7,7 @@
     </div>
 }
 
-@if (ViewData["NonexistantUser"] != null)
-{
-    <div class="alert alert-primary" role="alert">
-        @ViewData["NonexistantUser"]
-    </div>
-}
-else if (ViewData["ExternalError"] != null)
+@if (ViewData["ExternalError"] != null)
 {
     <div class="alert alert-primary" role="alert">
         @ViewData["ExternalError"]

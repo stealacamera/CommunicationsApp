@@ -26,14 +26,14 @@ public class PartialViewsController : BaseController
     [HttpPost("partialViews/channelSidebarPartial")]
     public IActionResult GetChannelMessagesPartial([FromBody] Channel_BriefOverview channel)
     {
-        ViewBag["CurrentUserId"] = GetCurrentUserId();
+        ViewBag.CurrentUserId = GetCurrentUserId();
         return PartialView("/Views/Shared/Channels/_ChannelSidebarGroupPartial.cshtml", channel);
     }
 
     [HttpPost("partialViews/openChannelMembersListItem")]
     public IActionResult GetOpenChannelMembersListItem([FromBody] ChannelMember member)
     {
-        ViewBag["CurrentUserId"] = GetCurrentUserId();
+        ViewBag.CurrentUserId = GetCurrentUserId();
         return PartialView("/Views/Shared/Channels/_OpenChannelMembersListItem.cshtml", member);
     }
 }

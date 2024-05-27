@@ -1,14 +1,15 @@
-﻿using CommunicationsApp.Application.Common.Errors;
-using CommunicationsApp.Application.Operations.Identity.Commands.ConfigureExternalAuthProperties;
-using CommunicationsApp.Application.Operations.Identity.Commands.ConfirmEmail;
-using CommunicationsApp.Application.Operations.Identity.Commands.ExternalLoginUser;
-using CommunicationsApp.Application.Operations.Identity.Commands.ExternalSignUpUser;
-using CommunicationsApp.Application.Operations.Identity.Commands.LoginUser;
-using CommunicationsApp.Application.Operations.Identity.Commands.LogoutUser;
-using CommunicationsApp.Application.Operations.Identity.Commands.ResendEmailConfirmation;
-using CommunicationsApp.Application.Operations.Identity.Queries.GetExternalAuthSchemes;
-using CommunicationsApp.Application.Operations.Users.Commands.CreateUser;
+﻿using CommunicationsApp.Application.Behaviour.Operations.Identity.Commands.ConfigureExternalAuthProperties;
+using CommunicationsApp.Application.Behaviour.Operations.Identity.Commands.ConfirmEmail;
+using CommunicationsApp.Application.Behaviour.Operations.Identity.Commands.ExternalLoginUser;
+using CommunicationsApp.Application.Behaviour.Operations.Identity.Commands.ExternalSignUpUser;
+using CommunicationsApp.Application.Behaviour.Operations.Identity.Commands.LoginUser;
+using CommunicationsApp.Application.Behaviour.Operations.Identity.Commands.LogoutUser;
+using CommunicationsApp.Application.Behaviour.Operations.Identity.Commands.ResendEmailConfirmation;
+using CommunicationsApp.Application.Behaviour.Operations.Identity.Queries.GetExternalAuthSchemes;
+using CommunicationsApp.Application.Behaviour.Operations.Users.Commands.CreateUser;
+using CommunicationsApp.Domain.Common;
 using CommunicationsApp.Web.Models;
+using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
@@ -24,7 +25,8 @@ public class AccountsController : BaseController
     [HttpGet]
     public async Task<IActionResult> SignUp()
     {
-        var model = new SignUpDTO {
+        var model = new SignUpDTO
+        {
             AuthSchemes = await Sender.Send(new GetExternalAuthSchemesQuery())
         };
 
@@ -34,17 +36,27 @@ public class AccountsController : BaseController
     [HttpPost]
     public async Task<IActionResult> SignUp(SignUpDTO model)
     {
-        if (!ModelState.IsValid)
-            return View(model);
+        var validationResult = await new SignUpValidator().ValidateAsync(model);
 
-        CreateUserCommand command = new(model.Username, model.Password, model.Email, GetEmailConfirmationUrl());
+        if (!validationResult.IsValid)
+        {
+            validationResult.AddToModelState(ModelState);
+            model.AuthSchemes = await Sender.Send(new GetExternalAuthSchemesQuery());
+            return View(model);
+        }
+
+        CreateUserCommand command = new(model.Username, model.Password,
+                                        model.Email, GetEmailConfirmationUrl());
+
         var createResult = await Sender.Send(command);
 
         if (createResult.Succeded)
             return RedirectToAction(nameof(EmailConfirmation));
         else
         {
-            ModelState.AddModelError(string.Empty, createResult.Error.Description);
+            model.AuthSchemes = await Sender.Send(new GetExternalAuthSchemesQuery());
+            AddSignupModelErrors(createResult.Errors);
+
             return View(model);
         }
     }
@@ -63,46 +75,29 @@ public class AccountsController : BaseController
     [HttpPost]
     public async Task<IActionResult> Login(LoginDTO model)
     {
-        if (!ModelState.IsValid)
+        var validationResult = await new LoginValidator().ValidateAsync(model);
+
+        if (!validationResult.IsValid)
+        {
+            validationResult.AddToModelState(ModelState);
+            model.AuthSchemes = await Sender.Send(new GetExternalAuthSchemesQuery());
+
             return View(model);
+        }
 
         LoginUserCommand command = new(model.Email, model.Password, model.RememberMe);
         var loginResult = await Sender.Send(command);
 
-        if (loginResult.Succeded)
-        {
-            if (loginResult.Value)
-                return LocalRedirect(Url.Action("Index", "Home")!);
-            else
-            {
-                ModelState.AddModelError(string.Empty, "Wrong email and/or password. Try again");
-                model.AuthSchemes = await Sender.Send(new GetExternalAuthSchemesQuery());
-
-                return View(model);
-            }
-        }
-        else
-        {
-            if (loginResult.Error == UserErrors.NotFound)
-            {
-                ModelState.AddModelError(string.Empty, "Wrong email and/or password. Try again");
-                return View(model);
-            }
-            else if (loginResult.Error == IdentityErrors.UnverifiedEmail)
-                return RedirectToAction(nameof(EmailConfirmation), new { isEmailConfirmed = false });
-            else
-            {
-                ModelState.AddModelError(string.Empty, "Something went wrong. Try again later");
-                return View(model);
-            }
-        }
+        return loginResult.Succeded ?
+               await GetLoginSuccessResponseAsync(model, loginResult.Value) :
+               await GetLoginFailResponseAsync(loginResult, model);
     }
 
     [Authorize]
     [HttpPost]
     public async Task<IActionResult> LogOff()
     {
-        LogoutUserCommand command = new();
+        LogoutUserCommand command = new(GetCurrentUserId());
         await Sender.Send(command);
 
         return RedirectToAction(nameof(Login));
@@ -112,16 +107,18 @@ public class AccountsController : BaseController
     public async Task<IActionResult> ExternalSignUp(string provider)
     {
         var redirectUrl = Url.Action(
-            nameof(ExternalSignUpResponse), 
+            nameof(ExternalSignUpResponse),
             ControllerContext.ActionDescriptor.ControllerName)!;
-        
+
         var properties = await Sender.Send(new ConfigureExternalAuthPropertiesCommand(provider, redirectUrl));
         return new ChallengeResult(provider, properties);
     }
 
+    [HttpGet, HttpPost]
     public async Task<IActionResult> ExternalSignUpResponse(string? returnUrl, string? remoteError)
     {
-        string baseExternalError = "Something went wrong with the external login provider. Try again in a moment";
+        string baseExternalError = @"Something went wrong. Make sure this email 
+                                    hasn't been used for an existing account and try again later";
 
         if (!string.IsNullOrEmpty(remoteError))
         {
@@ -134,10 +131,7 @@ public class AccountsController : BaseController
 
         if (result.Failed)
         {
-            ViewData["ExternalError"] = result.Error == IdentityErrors.ExternalLoginError
-                                        ? baseExternalError
-                                        : "Something went wrong, please try again";
-
+            ViewData["ExternalError"] = baseExternalError;
             return View(nameof(SignUp));
         }
         else
@@ -148,21 +142,27 @@ public class AccountsController : BaseController
     public async Task<IActionResult> ExternalLogin(string provider)
     {
         var redirectUrl = Url.Action(
-            nameof(ExternalLoginResponse), 
+            nameof(ExternalLoginResponse),
             ControllerContext.ActionDescriptor.ControllerName)!;
         var properties = await Sender.Send(new ConfigureExternalAuthPropertiesCommand(provider, redirectUrl));
 
         return new ChallengeResult(provider, properties);
     }
 
+    [HttpGet, HttpPost]
     public async Task<IActionResult> ExternalLoginResponse(string? returnUrl, string? remoteError)
     {
-        string baseExternalError = "Something went wrong with the external login provider. Try again in a moment";
-
         if (!string.IsNullOrEmpty(remoteError))
         {
-            ViewData["ExternalError"] = baseExternalError;
-            return View(nameof(SignUp));
+            ViewData["ExternalError"] = @"Something went wrong with the external login 
+                                        provider. Try again in a moment";
+
+            var model = new SignUpDTO
+            {
+                AuthSchemes = await Sender.Send(new GetExternalAuthSchemesQuery())
+            };
+
+            return View(nameof(SignUp), model);
         }
 
         ExternalLoginCommand command = new();
@@ -170,12 +170,16 @@ public class AccountsController : BaseController
 
         if (result.Failed)
         {
-            if (result.Error == UserErrors.NotFound)
-                ViewData["NonexistantUser"] = "The given account is not signed up";
-            else if (result.Error == IdentityErrors.ExternalLoginError)
-                ViewData["ExternalError"] = baseExternalError;
+            ViewData["ExternalError"] = @"Something went wrong with the external 
+                                        login provider. Make sure you have signed
+                                        up with this email and try again in a moment";
 
-            return View(nameof(Login));
+            LoginDTO model = new LoginDTO
+            {
+                AuthSchemes = await Sender.Send(new GetExternalAuthSchemesQuery())
+            };
+
+            return View(nameof(Login), model);
         }
         else
             return RedirectToAction("Index", "Home");
@@ -188,7 +192,9 @@ public class AccountsController : BaseController
     }
 
     [HttpGet]
-    public async Task<IActionResult> ConfirmEmail([Required] int userId, [Required] string token)
+    public async Task<IActionResult> ConfirmEmail(
+        [Required, Range(1, int.MaxValue)] int userId,
+        [Required] string token)
     {
         ConfirmEmailCommmand confirmationCommand = new(userId, token);
         bool isEmailConfirmed = await Sender.Send(confirmationCommand);
@@ -219,6 +225,61 @@ public class AccountsController : BaseController
     }
     #endregion
 
+    private async Task<IActionResult> GetLoginSuccessResponseAsync(LoginDTO model, bool loginSucceded)
+    {
+        if (loginSucceded)
+            return LocalRedirect(Url.Action("Index", "Home")!);
+        else
+        {
+            model.AuthSchemes = await Sender.Send(new GetExternalAuthSchemesQuery());
+            ModelState.AddModelError(string.Empty, "Wrong email and/or password. Try again");
+
+            return View(model);
+        }
+    }
+
+    private async Task<IActionResult> GetLoginFailResponseAsync(Result errorResult, LoginDTO model)
+    {
+        if (errorResult.ContainsErrorType(ErrorType.UnverifiedUser))
+            return RedirectToAction(nameof(EmailConfirmation), new { isEmailConfirmed = false });
+        else
+        {
+            string errorMessage = errorResult.ContainsErrorType(ErrorType.NotFound) ?
+                                  "Wrong email and/or password. Try again" :
+                                  "Something went wrong. Try again later";
+
+            model.AuthSchemes = await Sender.Send(new GetExternalAuthSchemesQuery());
+            ModelState.AddModelError(string.Empty, errorMessage);
+
+            return View(model);
+        }
+    }
+
+    private void AddSignupModelErrors(IList<Error> errors)
+    {
+        var propertyNames = typeof(SignUpDTO).GetProperties()
+                                                 .Select(e => e.Name)
+                                                 .ToList();
+
+        foreach (var error in errors)
+        {
+            string errorPropertyName = string.Empty;
+            int propertyIndex = propertyNames.FindIndex(e => e.Equals(
+                                                error.PropertyName,
+                                                StringComparison.OrdinalIgnoreCase));
+
+            if (propertyIndex >= 0)
+                errorPropertyName = propertyNames[propertyIndex];
+
+            foreach (var reason in error.Reasons)
+                ModelState.AddModelError(errorPropertyName, reason);
+        }
+    }
+
     private string GetEmailConfirmationUrl()
-        => Url.Action(nameof(ConfirmEmail), ControllerContext.ActionDescriptor.ControllerName, null, protocol: Request.Scheme)!;
+        => Url.Action(
+                nameof(ConfirmEmail),
+                ControllerContext.ActionDescriptor.ControllerName,
+                null,
+                protocol: Request.Scheme)!;
 }

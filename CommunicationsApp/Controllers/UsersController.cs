@@ -1,4 +1,4 @@
-﻿using CommunicationsApp.Application.Operations.Users.Queries.QueryByEmail;
+﻿using CommunicationsApp.Application.Behaviour.Operations.Users.Queries.QueryByEmailAndUsername;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

@@ -1,10 +1,12 @@
-﻿using CommunicationsApp.Application.DTOs;
-using CommunicationsApp.Application.Operations.ChannelMembers.Queries.GetAllMembershipsForUser;
-using CommunicationsApp.Application.Operations.ChannelMembers.Queries.IsUserMemberOfChannel;
-using CommunicationsApp.Application.Operations.Channels.Queries.GetChannelByCode;
-using CommunicationsApp.Application.Operations.Messages.Queries.GetLatestMessageForChannel;
+﻿using CommunicationsApp.Application.Behaviour.Operations.ChannelMembers.Queries.GetAllMembershipsForChannel;
+using CommunicationsApp.Application.Behaviour.Operations.ChannelMembers.Queries.GetAllMembershipsForUser;
+using CommunicationsApp.Application.Behaviour.Operations.ChannelMembers.Queries.IsUserMemberOfChannel;
+using CommunicationsApp.Application.Behaviour.Operations.Channels.Queries.GetChannelByCode;
+using CommunicationsApp.Application.Behaviour.Operations.Messages.Queries.GetLatestMessageForChannel;
+using CommunicationsApp.Application.DTOs;
 using MediatR;
 using Microsoft.AspNetCore.SignalR;
+using System.Runtime.InteropServices;
 
 namespace CommunicationsApp.Web.Common.Hubs;
 
@@ -19,6 +21,8 @@ public sealed class ChatHub : Hub
     private readonly string _addedToChannelMethod = "AddedToChannel",
                             _removedFromChannelMethod = "RemovedFromChannel";
 
+    private readonly string _onFailure = "FunctionFailed";
+
     private readonly ISender _sender;
 
     public ChatHub(ISender sender) : base()
@@ -29,7 +33,7 @@ public sealed class ChatHub : Hub
         if (Context.UserIdentifier == null)
             throw new UnauthorizedAccessException();
 
-        GetAllMembershipsForUserCommand command = new(int.Parse(Context.UserIdentifier));
+        GetAllMembershipsForUserQuery command = new(int.Parse(Context.UserIdentifier));
         var memberships = await _sender.Send(command);
 
         // If failed, user is not registered
@@ -47,13 +51,13 @@ public sealed class ChatHub : Hub
         if (Context.UserIdentifier == null)
             return;
 
-        GetAllMembershipsForUserCommand command = new(int.Parse(Context.UserIdentifier));
+        GetAllMembershipsForUserQuery command = new(int.Parse(Context.UserIdentifier));
         var memberships = await _sender.Send(command);
 
         foreach (var membership in memberships.Value!)
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, membership.Channel.Code);
 
-        base.OnDisconnectedAsync(exception);
+        await base.OnDisconnectedAsync(exception);
     }
 
     public async Task SendMessageToChannel(Message message, string channelCode)
@@ -63,12 +67,19 @@ public sealed class ChatHub : Hub
 
     public async Task DeleteMessageFromChannel(string channelCode, int deletedMessageId)
     {
-        await Clients.Group(channelCode).SendAsync(_deleteMessageMethod, deletedMessageId, channelCode);
+        await Clients.Group(channelCode).SendAsync(_deleteMessageMethod, deletedMessageId);
     }
 
     public async Task JoinChannel(string channelCode)
     {
-        // Check if user is member of channel
+        await Groups.AddToGroupAsync(Context.ConnectionId, channelCode);
+
+        var channel = await _sender.Send(new GetChannelByCodeQuery(channelCode));
+        await Clients.Client(Context.ConnectionId).SendAsync(_joinChannelMethod, channel.Value);
+    }
+
+    public async Task CreateChannel(string channelCode)
+    {
         if (Context.UserIdentifier == null)
             throw new UnauthorizedAccessException();
 
@@ -76,23 +87,25 @@ public sealed class ChatHub : Hub
         var channelResult = await _sender.Send(channelQuery);
 
         if (channelResult.Failed)
+        {
+            await Clients.User(Context.UserIdentifier).SendAsync(_onFailure);
             return;
+        }
 
-        IsUserMemberOfChannelQuery membershipQuery = new(int.Parse(Context.UserIdentifier), channelResult.Value.Id);
-        var isUserMember = await _sender.Send(membershipQuery);
+        var channel = channelResult.Value;
 
-        if (!isUserMember)
-            return;
+        GetAllMembershipsForChannelQuery membersQuery = new(channel.Id);
+        var membersResult = await _sender.Send(membersQuery);
+        var members = membersResult.Value;
 
-        GetLatestChannelForMessageQuery messageQuery = new(channelResult.Value.Id);
+        GetLatestChannelForMessageQuery messageQuery = new(channel.Id);
         var messageResult = await _sender.Send(messageQuery);
+        var latestMessage = messageResult.Value;
 
-        await Groups.AddToGroupAsync(Context.ConnectionId, channelCode);
-
-        await Clients.Group(channelCode)
+        await Clients.Users(members.Select(e => e.Member.Id.ToString()).ToList())
                      .SendAsync(
                         _joinChannelMethod,
-                        new Channel_BriefOverview(channelResult.Value, messageResult.Value));
+                        new Channel_BriefOverview(channel, latestMessage));
     }
 
     public async Task LeaveChannel(string channelCode)
@@ -103,39 +116,32 @@ public sealed class ChatHub : Hub
         if (channelResult.Failed)
             return;
 
-        IsUserMemberOfChannelQuery membershipQuery = new(int.Parse(Context.UserIdentifier), channelResult.Value.Id);
+        IsUserMemberOfChannelQuery membershipQuery = new(int.Parse(Context.UserIdentifier!), channelResult.Value.Id);
         var isUserMember = await _sender.Send(membershipQuery);
 
         if (!isUserMember)
             return;
 
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, channelCode);
+        await Clients.Client(Context.ConnectionId).SendAsync(_leaveChannelMethod, channelCode);
     }
 
-    public async Task AddMembersToChannel(IList<ChannelMember> newMembers)
+    public async Task AddMemberToChannel(ChannelMember newMember)
     {
-        string channelCode = newMembers[0].Channel.Code;
+        string channelCode = newMember.Channel.Code;
 
         // Alert existing members which users were added
         await Clients.Group(channelCode)
-                     .SendAsync(_addedToChannelMethod, channelCode, newMembers);
-
-        var memberIds = newMembers.Select(e => e.Member.Id.ToString())
-                               .ToList()
-                               .AsReadOnly();
+                     .SendAsync(_addedToChannelMethod, channelCode, newMember);
 
         // Alert newly added users
-        await Clients.Users(memberIds)
-                     .SendAsync(_addedToChannelMethod, channelCode, newMembers);
+        await Clients.Users(newMember.Member.Id.ToString())
+                     .SendAsync(_addedToChannelMethod, channelCode, newMember);
     }
 
-    public async Task RemoveMembersFromChannel(string channelCode, IList<int> removedMemberIds)
+    public async Task RemoveMemberFromChannel(string channelCode, int removedMemberId)
     {
-        var userIds = removedMemberIds.Select(e => e.ToString())
-                                      .ToList()
-                                      .AsReadOnly();
-
         await Clients.Group(channelCode)
-                     .SendAsync(_removedFromChannelMethod, channelCode, removedMemberIds);
+                     .SendAsync(_removedFromChannelMethod, channelCode, removedMemberId);
     }
 }

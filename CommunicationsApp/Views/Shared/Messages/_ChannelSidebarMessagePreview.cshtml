@@ -1,24 +1,27 @@
 ﻿@using CommunicationsApp.Domain.Common.Enums;
 @model CommunicationsApp.Application.DTOs.Message
 
-<div id="sidebarMessage@(Model.Id)" class="col-10 mb-1 small">
-    <text>
+<div id="sidebarMessage@(Model.Id)" class="col-10 mb-1 small d-flex flex-row gap-2">
+    <p class="text-truncate">
         @Model.User.UserName:
 
         @if (Model.DeletedAt == null && Model.Text == null)
         {
-            <span class="fst-italic text-truncate">
-                @if(Model.Media![0].Type == MediaType.Image)
+            <span class="fst-italic">
+                @if (Model.Media![0].Type == MediaType.Image)
                 {
                     <i class="fa-solid fa-camera"></i>
                     <text>Photo</text>
-                } else if(Model.Media[0].Type == MediaType.Video)
+                }
+                else if (Model.Media[0].Type == MediaType.Video)
                 {
                     <i class="fa-solid fa-video"></i>
                     <text>Video</text>
-                } else
+                }
+                else
                 {
-                    <text>@Model.Media[0].Filename</text>
+                    <i class="fa-regular fa-file"></i>
+                    <text>File</text>
                 }
             </span>
         }
@@ -26,7 +29,7 @@
         {
             <text>@Model.Text</text>
         }
+    </p>
 
-        @Model.CreatedAt
-    </text>
+    <p class="ms-auto">@Model.CreatedAt.ToString("dd MMM HH:mm tt")</p>
 </div>

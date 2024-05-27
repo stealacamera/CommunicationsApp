@@ -15,4 +15,9 @@ public class ErrorsController : Controller
 
         return View(error);
     }
+
+    public new IActionResult NotFound()
+    {
+        return View();
+    }
 }

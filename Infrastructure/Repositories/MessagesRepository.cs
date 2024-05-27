@@ -21,11 +21,11 @@ internal class MessagesRepository : BaseSoftDeleteRepository<Message, int>, IMes
         query = query.OrderByDescending(e => e.Id);
 
         return await CursorPaginatedEnumerable<int, Message>.CreateAsync(
-            cursor, pageSize, 
-            nameof(Message.Id), 
-            query, 
-            cancellationToken, 
-            getOlderValues: false);
+            cursor, pageSize,
+            nameof(Message.Id),
+            query,
+            false,
+            cancellationToken);
     }
 
     public async Task<Message?> GetLatestForChannelAsync(int channelId, CancellationToken cancellationToken)

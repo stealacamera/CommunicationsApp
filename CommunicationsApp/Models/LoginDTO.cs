@@ -1,24 +1,28 @@
-﻿using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
-using System.ComponentModel;
-using System.ComponentModel.DataAnnotations;
+﻿using FluentValidation;
+using Microsoft.AspNetCore.Authentication;
 
 namespace CommunicationsApp.Web.Models;
 
 public record LoginDTO
 {
-    [Required]
-    [EmailAddress]
     public string Email { get; set; } = null!;
-
-    [Required]
-    [DataType(DataType.Password)]
     public string Password { get; set; } = null!;
-
-    [Required]
-    [DisplayName("Remember me")]
     public bool RememberMe { get; set; } = false;
 
-    [ValidateNever]
-    public IEnumerable<AuthenticationScheme> AuthSchemes { get; set; }
+    public IEnumerable<AuthenticationScheme> AuthSchemes { get; set; } = null!;
+}
+
+internal class LoginValidator : AbstractValidator<LoginDTO>
+{
+    public LoginValidator()
+    {
+        RuleFor(e => e.Email)
+            .NotEmpty()
+            .EmailAddress()
+            .MaximumLength(100);
+
+        RuleFor(e => e.Password)
+            .NotEmpty()
+            .MaximumLength(75);
+    }
 }

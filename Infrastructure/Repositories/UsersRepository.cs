@@ -27,7 +27,10 @@ internal class UsersRepository : IUsersRepository
     public async Task<bool> DoesUserExistAsync(int id, bool excludeDeleted = true)
         => await GetByIdAsync(id, excludeDeleted) != null;
 
-    public async Task<User?> GetByIdAsync(int id, bool excludeDeleted = true, bool excludeNonConfirmedEmail = true)
+    public async Task<User?> GetByIdAsync(
+        int id, 
+        bool excludeDeleted = true, 
+        bool excludeNonConfirmedEmail = true)
     {
         var user = await _userManager.FindByIdAsync(id.ToString());
 
@@ -48,7 +51,10 @@ internal class UsersRepository : IUsersRepository
     public async Task<string> GetEmailConfirmationTokenAsync(User user)
         => await _userManager.GenerateEmailConfirmationTokenAsync(user);
 
-    public async Task<User?> GetByEmailAsync(string email, bool excludeDeleted = true, bool excludeNonConfirmedEmail = true)
+    public async Task<User?> GetByEmailAsync(
+        string email, 
+        bool excludeDeleted = true, 
+        bool excludeNonConfirmedEmail = true)
     {
         var user = await _userManager.FindByEmailAsync(email);
 
@@ -60,7 +66,10 @@ internal class UsersRepository : IUsersRepository
         return user;
     }
 
-    public async Task<IEnumerable<User>> QueryByEmailAndUsernameAsync(string queryString, CancellationToken cancellationToken, int? excludeUserId = null)
+    public async Task<IEnumerable<User>> QueryByEmailAndUsernameAsync(
+        string queryString, 
+        int? excludeUserId = null, 
+        CancellationToken cancellationToken = default)
     {
         if (queryString.IsNullOrEmpty())
             return new List<User>();

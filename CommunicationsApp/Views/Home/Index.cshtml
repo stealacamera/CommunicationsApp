@@ -24,8 +24,8 @@
                         <label for="newChannelName">Channel name</label>
                     </div>
 
-                    <div class="form-group">
-                        <label for="members">Select users</label>
+                    <div class="form-group mt-3">
+                        <label class="form-label" for="members">Select members</label>
 
                         <input required
                                id="memberSearchInput"
@@ -34,10 +34,10 @@
                                class="form-control"
                                placeholder="Type in a username or email">
 
-                        <div id="membersSearchResult"></div>
+                        <div id="membersSearchResult" class="mt-2"></div>
                     </div>
 
-                    <input type="submit" class="btn btn-primary" value="Create" />
+                    <input type="submit" class="btn btn-primary mt-3" value="Create" />
                 </form>
             </div>
         </div>
@@ -72,9 +72,9 @@
         </p>
 
         <div id="channelsSidebar" class="list-group list-group-flush border-bottom scrollarea">
-            @if (!Model.Any())
+            @if (Model == null || !Model.Any())
             {
-                <p>No channels as of now</p>
+                <p class="text-secondary text-center fst-italic">No channels as of now</p>
             }
             else
             {
@@ -92,13 +92,16 @@
 
 @section Scripts {
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script src="/js//utils.js"></script>
 
     <script src="/js/signalr/dist/browser/signalr.js"></script>
+    <script src="/js/channelActions.js"></script>
+
     <script src="/js/chatConnectionSetup.js"></script>
+    <script src="/js/addChannelActions.js"></script>
 
     <script src="/js/userSearchAjax.js"></script>
     <script src="/js/createChannelAjax.js"></script>
 
     <script src="/js/joinChannelAjax.js"></script>
-    <script src="/js/showChannelAjax.js"></script>
 }

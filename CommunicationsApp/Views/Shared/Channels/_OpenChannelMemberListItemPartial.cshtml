@@ -1,26 +1,27 @@
-﻿@using CommunicationsApp.Application.Common.Enums;
-@model CommunicationsApp.Application.DTOs.ChannelMember
+﻿@using CommunicationsApp.Domain.Entities
+@using CommunicationsApp.Application.Common.Enums
+@model CommunicationsApp.Web.Models.ViewModels.MembersListVM
 
-<li id="openChannelMember@(Model.Member.Id)" class="dropdown-item">
-    <span class="fw-bold">
-        @(Model.Member.Id == ViewBag.CurrentUserId ? "You" : Model.Member.UserName)
-    </span> @Model.Member.Email
 
-    @if (ViewBag.CurrentUserId == Model.Member.Id && Model.Role == ChannelRole.Owner)
+<li id="openChannelMember@(Model.ChannelMember.Member.Id)" class="dropdown-item d-flex flex-row gap-2">
+    <p class="align-middle">
+        <span class="fw-bold">
+            @(Model.ChannelMember.Member.UserName == @User.Identity?.Name ? "You" : Model.ChannelMember.Member.UserName)
+        </span> @Model.ChannelMember.Member.Email
+    </p>
+
+    @if (Model.IsGroupChannel && Model.CurrentUser.Role == ChannelRole.Owner && Model.ChannelMember.Role != ChannelRole.Owner)
     {
-        @if (Model.Role != ChannelRole.Owner && Model.Member.Id != ViewBag["CurrentUserId"])
-        {
-            <form class="deleteChannelMemberForm" data-member-id="@Model.Member.Id"
+        <form class="deleteChannelMemberForm" data-member-id="@Model.ChannelMember.Member.Id"
           asp-controller="ChannelMembers"
           asp-action="RemoveMemberFromChannel"
-          asp-route-channelId="@Model.Channel.Id"
-          asp-route-memberId="@Model.Member.Id">
-                <button type="submit" class="btn">
-                    <i class="fa-solid fa-xmark" style="color: #e11c0e;">
-                        <span class="visually-hidden">Remove</span>
-                    </i>
-                </button>
-            </form>
-        }
+          asp-route-channelId="@Model.ChannelMember.Channel.Id"
+          asp-route-memberId="@Model.ChannelMember.Member.Id">
+            <button type="submit" class="btn">
+                <i class="fa-solid fa-xmark" style="color: #e11c0e;">
+                    <span class="visually-hidden">Remove</span>
+                </i>
+            </button>
+        </form>
     }
 </li>
